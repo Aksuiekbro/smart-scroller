@@ -18,16 +18,11 @@ Off-topic items get a frosted-glass overlay with a small card showing the video 
 
 ## Install in Orion
 
-Orion supports Chrome (Web Store) and Firefox extensions natively, but to load this unpacked you need developer mode:
+The verified path (2026-05-16) is **Install from File** via Orion iOS Extensions menu, fed a self-built zip. No Chrome Web Store account or Xcode required.
 
-1. Open **Orion → Settings → Extensions**.
-2. Enable **"Allow installing extensions from Chrome Web Store"** and **"Allow installing extensions from Firefox Add-ons"** if you haven't already.
-3. There's no public "load unpacked" button in Orion's UI yet (as of writing) — the workable path is to:
-   - Zip the `smartscroller/` folder.
-   - Drag the `manifest.json` from a Chrome browser at `chrome://extensions` (with **Developer mode** on, **Load unpacked**) to test it works.
-   - For Orion specifically, the easiest current path is to publish privately to the Chrome Web Store as **Unlisted** and install from there. Orion will recognize and install it.
+See **[docs/install-ios.md](docs/install-ios.md)** for the full checklist: zip-build command, AirDrop/iCloud transfer, Orion iOS install steps, smoke test, troubleshooting, and backup recipes.
 
-If you don't want to publish even unlisted, the simplest cross-browser path is to run it in Chrome/Brave (which Orion users typically already have for extension dev) and use the same browser as a backup. Orion's unpacked-extension support is improving — check [browser.kagi.com/manual/extensions.html](https://browser.kagi.com/manual/extensions.html) for the latest method.
+> **Prerequisite on iPhone:** enable **Request Desktop Website** for `youtube.com` in Orion (tap "AA" in the address bar). Without it, YouTube Shorts selectors don't match the mobile DOM — only Instagram works. Phase 2 removes this requirement.
 
 ### Install in Chrome / Edge / Brave (works today)
 
