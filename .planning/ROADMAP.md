@@ -9,7 +9,7 @@
 
 ## Phases
 
-- [ ] **Phase 1: Install path validation on iPhone Orion** — Prove v0.1 (unchanged) installs and runs on iPhone Orion via a documented, repeatable path
+- [x] **Phase 1: Install path validation on iPhone Orion** — Prove v0.1 (unchanged) installs and runs on iPhone Orion via a documented, repeatable path
 - [ ] **Phase 2: Mobile DOM port + on-device embedder smoke test** — Existing v0.1 features work on mobile YouTube/Instagram DOMs, and the embedding model proves itself viable on real iPhone hardware
 - [ ] **Phase 3: Transcript fetch + tiered semantic classifier** — Off-topic Shorts/Reels get blurred using transcripts + on-device embeddings, with keyword tier as the fast path
 - [ ] **Phase 4: Tuning, trust, and the smoke playbook** — Author can calibrate thresholds, see why something was blurred, and run a 5-minute manual check after platform changes
@@ -29,7 +29,7 @@
   5. A single documented decision exists for which distribution path the project uses: **"Install from File" via Orion iOS Extensions menu, fed a self-built zip of the unpacked extension** (verified on-device 2026-05-16). Both originally-proposed paths — Chrome Web Store unlisted ($5 one-time) and Xcode-wrapped Safari Web Extension ($99/yr) — are explicitly ruled out as primary; they remain documented as backup recipes only. See `.planning/phases/01-install-path-validation-on-iphone-orion/01-CONTEXT.md` (D-01, D-02) for the locked decision.
 **Plans:** 1 plan
 Plans:
-- [ ] 01-01-PLAN.md — Write docs/install-ios.md, update README Install in Orion section, add *.zip to .gitignore
+- [x] 01-01-PLAN.md — Write docs/install-ios.md, update README Install in Orion section, add *.zip to .gitignore
 
 ### Phase 2: Mobile DOM port + on-device embedder smoke test
 **Goal:** Existing v0.1 behaviors keep working on the actual mobile YouTube and Instagram DOMs that iPhone Orion sees, and the embedding model is proven loadable on real iPhone hardware
@@ -80,7 +80,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Install path validation on iPhone Orion | 0/1 | Not started | - |
+| 1. Install path validation on iPhone Orion | 1/1 | Complete | 2026-05-16 |
 | 2. Mobile DOM port + on-device embedder smoke test | 0/0 | Not started | - |
 | 3. Transcript fetch + tiered semantic classifier | 0/0 | Not started | - |
 | 4. Tuning, trust, and the smoke playbook | 0/0 | Not started | - |
