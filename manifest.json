@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SmartScroller",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Blur YouTube Shorts, Instagram Reels, and YouTube videos that aren't on your chosen topics. Keep the feed, kill the noise.",
   "permissions": ["storage"],
   "host_permissions": [

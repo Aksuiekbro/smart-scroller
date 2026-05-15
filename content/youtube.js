@@ -36,6 +36,10 @@
 
   function extractShortMeta(el) {
     const title = txt(el, [
+      // Current (mid-2026) Shorts title view-model — verified via live DOM probe
+      'yt-shorts-video-title-view-model',
+      '.ytShortsVideoTitleViewModelHost',
+      // Older variants kept for backward compat
       'h2.title yt-formatted-string',
       'h2.title',
       '.ytReelMetapanelViewModelTitle',

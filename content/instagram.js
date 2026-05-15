@@ -18,15 +18,42 @@
   const SS = globalThis.SmartScroller;
   if (!SS) return;
 
+  // IG redesigned: video container and metadata sidebar are now cousins, not parent/child.
+  // The old "closest article / role=presentation" path no longer matches.
+  // Verified via live DOM probe 2026-05-16: depths 1-6 above <video> contain only the player;
+  // depth ~7-8 is where the metadata sidebar joins (profile link + caption spans appear).
+  // Heuristic: walk up to the FIRST ancestor that contains exactly one video AND a profile
+  // link (e.g. /username/) AND meaningful text content. Fall back to the older heuristics
+  // for older IG layouts.
+  function isProfileLink(a) {
+    const href = a.getAttribute('href') || '';
+    return /^\/[A-Za-z0-9._]+\/?$/.test(href);
+  }
+
   function findCard(videoEl) {
-    // Prefer <article> (feed) then the closest large positioned ancestor (reels page)
+    // Old paths first — cheap, harmless if they fail
     let el = videoEl.closest('article');
-    if (el) return el;
+    if (el && el.querySelector('a[href^="/"]')) return el;
     el = videoEl.closest('div[role="presentation"]');
-    if (el) return el;
-    // Walk up until we find a block of reasonable size
+    if (el && el.querySelector('a[href^="/"]')) return el;
+
+    // New layout: walk up looking for the wrapper that has video + profile link + text
     let node = videoEl.parentElement;
     let hops = 0;
+    while (node && hops < 16) {
+      const videoCount = node.querySelectorAll('video').length;
+      const profileLink = Array.from(node.querySelectorAll('a[href^="/"]')).find(isProfileLink);
+      const textLen = (node.textContent || '').trim().length;
+      if (videoCount === 1 && profileLink && textLen > 80) {
+        return node;
+      }
+      node = node.parentElement;
+      hops++;
+    }
+
+    // Last resort: any reasonably-sized container
+    node = videoEl.parentElement;
+    hops = 0;
     while (node && hops < 8) {
       const rect = node.getBoundingClientRect();
       if (rect.height >= 360 && rect.width >= 240) return node;
@@ -37,28 +64,42 @@
   }
 
   function extractCaption(card) {
-    // Caption is usually in an h1 (reels page) or a span/h3 next to the video
+    // Caption can live in h1/h3 (older layouts) OR in long spans (current IG, May 2026).
+    // Strategy: collect all text-bearing candidates, return the longest plausible one.
     const candidates = [
       ...card.querySelectorAll('h1'),
       ...card.querySelectorAll('h3'),
       ...card.querySelectorAll('div[role="button"] span'),
-      ...card.querySelectorAll('span[dir="auto"]')
+      ...card.querySelectorAll('span[dir="auto"]'),
+      ...card.querySelectorAll('span') // fallback for current IG (no dir attr on caption spans)
     ];
     let best = '';
     for (const c of candidates) {
       const t = c.textContent?.trim() || '';
-      if (t.length > best.length && t.length < 1200) best = t;
+      // Skip aria-label noise ("Audio is muted", "Play button icon", etc.) — usually <30 chars
+      if (t.length > best.length && t.length > 20 && t.length < 1200) best = t;
       if (best.length > 60) break;
     }
     return best;
   }
 
   function extractAuthor(card) {
-    // Author = first profile link in the card header (a[href^="/"][role="link"])
-    const link = card.querySelector(
+    // Older layouts: header link or role=link
+    const old = card.querySelector(
       'header a[role="link"], a[role="link"][href^="/"]:not([href*="/p/"]):not([href*="/reel/"]):not([href*="/explore/"])'
     );
-    return link?.textContent?.trim() || link?.getAttribute('href')?.replace(/\//g, '') || '';
+    if (old) {
+      return old.textContent?.trim() || old.getAttribute('href')?.replace(/\//g, '') || '';
+    }
+    // Current IG (May 2026): profile link with href=/username/
+    const profile = Array.from(card.querySelectorAll('a[href^="/"]')).find(isProfileLink);
+    if (profile) {
+      const text = profile.textContent?.trim();
+      if (text) return text;
+      const href = profile.getAttribute('href') || '';
+      return href.replace(/^\/|\/$/g, '');
+    }
+    return '';
   }
 
   function extractMeta(card) {
