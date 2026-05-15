@@ -27,7 +27,9 @@
   3. The same extension build (or its desktop equivalent) still loads in desktop Orion or Chrome/Brave so the author retains a dev sandbox
   4. After backgrounding the Orion app, killing it, restarting the phone, or completing an iOS Safari refresh, the extension is still enabled and still blurring without manual toggling
   5. A single documented decision exists for which distribution path the project uses: **"Install from File" via Orion iOS Extensions menu, fed a self-built zip of the unpacked extension** (verified on-device 2026-05-16). Both originally-proposed paths — Chrome Web Store unlisted ($5 one-time) and Xcode-wrapped Safari Web Extension ($99/yr) — are explicitly ruled out as primary; they remain documented as backup recipes only. See `.planning/phases/01-install-path-validation-on-iphone-orion/01-CONTEXT.md` (D-01, D-02) for the locked decision.
-**Plans:** TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 01-01-PLAN.md — Write docs/install-ios.md, update README Install in Orion section, add *.zip to .gitignore
 
 ### Phase 2: Mobile DOM port + on-device embedder smoke test
 **Goal:** Existing v0.1 behaviors keep working on the actual mobile YouTube and Instagram DOMs that iPhone Orion sees, and the embedding model is proven loadable on real iPhone hardware
@@ -78,7 +80,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Install path validation on iPhone Orion | 0/0 | Not started | - |
+| 1. Install path validation on iPhone Orion | 0/1 | Not started | - |
 | 2. Mobile DOM port + on-device embedder smoke test | 0/0 | Not started | - |
 | 3. Transcript fetch + tiered semantic classifier | 0/0 | Not started | - |
 | 4. Tuning, trust, and the smoke playbook | 0/0 | Not started | - |
@@ -116,4 +118,4 @@ The chain is forced by the research's CRITICAL pitfalls:
 
 ---
 *Roadmap created: 2026-05-16*
-*Last updated: 2026-05-16 after initial creation*
+*Last updated: 2026-05-16 after Phase 1 plan creation (Plans count finalized for Phase 1)*
