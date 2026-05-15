@@ -12,7 +12,11 @@ findings:
   warning: 3
   info: 2
   total: 5
-status: issues_found
+  warnings_resolved: 3
+  info_resolved: 0
+status: resolved
+resolved_at: "2026-05-16T03:05:00Z"
+resolution_commit: fdbbb6d
 ---
 
 # Phase 01: Code Review Report
