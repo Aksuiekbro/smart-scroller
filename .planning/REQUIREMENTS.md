@@ -110,52 +110,56 @@ Explicitly excluded. The Features research surfaces 19 anti-features; the highes
 
 ## Traceability
 
-Empty initially — populated by the gsd-roadmapper agent.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PLAT-01 | TBD | Pending |
-| PLAT-02 | TBD | Pending |
-| PLAT-03 | TBD | Pending |
-| PLAT-04 | TBD | Pending |
-| DOM-01 | TBD | Pending |
-| DOM-02 | TBD | Pending |
-| DOM-03 | TBD | Pending |
-| DOM-04 | TBD | Pending |
-| DOM-05 | TBD | Pending |
-| CLAS-01 | TBD | Pending |
-| CLAS-02 | TBD | Pending |
-| CLAS-03 | TBD | Pending |
-| CLAS-04 | TBD | Pending |
-| CLAS-05 | TBD | Pending |
-| CLAS-06 | TBD | Pending |
-| CLAS-07 | TBD | Pending |
-| CLAS-08 | TBD | Pending |
-| CLAS-09 | TBD | Pending |
-| CLAS-10 | TBD | Pending |
-| CACH-01 | TBD | Pending |
-| CACH-02 | TBD | Pending |
-| CACH-03 | TBD | Pending |
-| CACH-04 | TBD | Pending |
-| CACH-05 | TBD | Pending |
-| UX-01 | TBD | Pending |
-| UX-02 | TBD | Pending |
-| UX-03 | TBD | Pending |
-| UX-04 | TBD | Pending |
-| UX-05 | TBD | Pending |
-| UX-06 | TBD | Pending |
-| UX-07 | TBD | Pending |
-| CALI-01 | TBD | Pending |
-| CALI-02 | TBD | Pending |
-| CALI-03 | TBD | Pending |
-| CALI-04 | TBD | Pending |
-| CALI-05 | TBD | Pending |
+| PLAT-01 | Phase 1 | Pending |
+| PLAT-02 | Phase 1 | Pending |
+| PLAT-03 | Phase 1 | Pending |
+| PLAT-04 | Phase 1 | Pending |
+| DOM-01 | Phase 2 | Pending |
+| DOM-02 | Phase 2 | Pending |
+| DOM-03 | Phase 2 | Pending |
+| DOM-04 | Phase 2 | Pending |
+| DOM-05 | Phase 2 | Pending |
+| CLAS-01 | Phase 3 | Pending |
+| CLAS-02 | Phase 3 | Pending |
+| CLAS-03 | Phase 3 | Pending |
+| CLAS-04 | Phase 3 | Pending |
+| CLAS-05 | Phase 2 | Pending |
+| CLAS-06 | Phase 3 | Pending |
+| CLAS-07 | Phase 3 | Pending |
+| CLAS-08 | Phase 3 | Pending |
+| CLAS-09 | Phase 3 | Pending |
+| CLAS-10 | Phase 2 | Pending |
+| CACH-01 | Phase 3 | Pending |
+| CACH-02 | Phase 3 | Pending |
+| CACH-03 | Phase 3 | Pending |
+| CACH-04 | Phase 2 | Pending |
+| CACH-05 | Phase 3 | Pending |
+| UX-01 | Phase 2 | Pending |
+| UX-02 | Phase 2 | Pending |
+| UX-03 | Phase 4 | Pending |
+| UX-04 | Phase 2 | Pending |
+| UX-05 | Phase 2 | Pending |
+| UX-06 | Phase 4 | Pending |
+| UX-07 | Phase 2 | Pending |
+| CALI-01 | Phase 4 | Pending |
+| CALI-02 | Phase 4 | Pending |
+| CALI-03 | Phase 4 | Pending |
+| CALI-04 | Phase 4 | Pending |
+| CALI-05 | Phase 2 | Pending |
 
 **Coverage:**
 - v1 requirements: 36 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 36 ⚠️ (will be 0 after roadmap creation)
+- Mapped to phases: 36 (100%)
+- Unmapped: 0
+
+**Per-phase counts:**
+- Phase 1 (Install path validation): 4 requirements — PLAT-01..04
+- Phase 2 (Mobile DOM + embedder smoke test): 14 requirements — DOM-01..05, CLAS-05, CLAS-10, UX-01, UX-02, UX-04, UX-05, UX-07, CACH-04, CALI-05
+- Phase 3 (Transcript + tiered classifier): 12 requirements — CLAS-01..04, CLAS-06..09, CACH-01..03, CACH-05
+- Phase 4 (Tuning, trust, smoke playbook): 6 requirements — UX-03, UX-06, CALI-01..04
 
 ---
 *Requirements defined: 2026-05-16*
-*Last updated: 2026-05-16 after initial definition*
+*Last updated: 2026-05-16 after roadmap creation (traceability populated)*
