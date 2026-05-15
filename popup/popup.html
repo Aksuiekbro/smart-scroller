@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SmartScroller</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="pop">
+      <header>
+        <strong>SmartScroller</strong>
+        <label class="switch">
+          <input type="checkbox" id="enabled" />
+          <span class="slider"></span>
+        </label>
+      </header>
+
+      <div class="stats">
+        <div class="stat"><span class="num" id="blurred">0</span><span class="lbl">blurred today</span></div>
+        <div class="stat"><span class="num" id="allowed">0</span><span class="lbl">on-topic</span></div>
+      </div>
+
+      <div class="pause">
+        <div class="pause-state" id="pauseState">Not paused</div>
+        <div class="pause-actions">
+          <button data-pause="15">15m</button>
+          <button data-pause="60">1h</button>
+          <button data-pause="0" class="resume">Resume</button>
+        </div>
+      </div>
+
+      <button class="open-options" id="openOptions">Edit topics →</button>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>

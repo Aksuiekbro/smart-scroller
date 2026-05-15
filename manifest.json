@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "SmartScroller",
+  "version": "0.1.0",
+  "description": "Blur YouTube Shorts, Instagram Reels, and YouTube videos that aren't on your chosen topics. Keep the feed, kill the noise.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "*://*.instagram.com/*"
+  ],
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "SmartScroller"
+  },
+  "background": {
+    "service_worker": "background/service-worker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["content/classifier.js", "content/youtube.js"],
+      "css": ["content/common.css"],
+      "run_at": "document_idle",
+      "all_frames": false
+    },
+    {
+      "matches": ["*://*.instagram.com/*"],
+      "js": ["content/classifier.js", "content/instagram.js"],
+      "css": ["content/common.css"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ]
+}

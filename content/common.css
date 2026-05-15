@@ -1,0 +1,120 @@
+/* SmartScroller blur + banner styles. Scoped with .ss- prefix to avoid host CSS clashes. */
+
+.ss-blurred {
+  position: relative;
+}
+
+.ss-blurred video,
+.ss-blurred img,
+.ss-blurred ytd-thumbnail,
+.ss-blurred yt-image,
+.ss-blurred [class*="thumbnail" i],
+.ss-blurred [class*="Thumbnail" i] {
+  filter: blur(28px) saturate(0.5) brightness(0.45) !important;
+  transition: filter 200ms ease;
+}
+
+.ss-blurred[data-ss-state="revealed"] video,
+.ss-blurred[data-ss-state="revealed"] img,
+.ss-blurred[data-ss-state="revealed"] ytd-thumbnail,
+.ss-blurred[data-ss-state="revealed"] yt-image {
+  filter: none !important;
+}
+
+.ss-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2147483600;
+  background: rgba(8, 8, 10, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  color: #f5f5f7;
+  pointer-events: auto;
+  animation: ss-fade-in 180ms ease-out;
+}
+
+@keyframes ss-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ss-card {
+  background: rgba(18, 18, 22, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 14px 18px;
+  border-radius: 14px;
+  max-width: min(340px, 80%);
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.ss-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 8px;
+}
+
+.ss-title {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  opacity: 0.95;
+  margin-bottom: 4px;
+  max-height: 3.6em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.ss-author {
+  font-size: 12px;
+  opacity: 0.55;
+  margin-bottom: 12px;
+}
+
+.ss-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.ss-btn {
+  background: rgba(255, 255, 255, 0.95);
+  color: #111;
+  border: 0;
+  padding: 7px 13px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: opacity 120ms, transform 120ms;
+}
+
+.ss-btn:hover { opacity: 0.85; }
+.ss-btn:active { transform: scale(0.97); }
+
+.ss-btn--ghost {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5f5f7;
+}
+
+/* Small-mode for thumbnail-sized blurs (home feed cards) */
+.ss-overlay--small .ss-card {
+  padding: 8px 10px;
+  border-radius: 10px;
+  max-width: 90%;
+}
+.ss-overlay--small .ss-eyebrow { font-size: 9px; margin-bottom: 4px; }
+.ss-overlay--small .ss-title { font-size: 11px; -webkit-line-clamp: 2; margin-bottom: 0; }
+.ss-overlay--small .ss-author { display: none; }
+.ss-overlay--small .ss-actions { margin-top: 6px; }
+.ss-overlay--small .ss-btn { padding: 4px 8px; font-size: 10px; }

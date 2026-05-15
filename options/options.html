@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SmartScroller — Settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main class="wrap">
+      <header class="hdr">
+        <div>
+          <h1>SmartScroller</h1>
+          <p class="sub">Only see Shorts, Reels, and videos that match your topics.</p>
+        </div>
+        <div class="status" id="status" aria-live="polite"></div>
+      </header>
+
+      <section class="card">
+        <div class="row between">
+          <div>
+            <h2>Filtering</h2>
+            <p class="hint">Turn off to see everything. Use Pause for short breaks.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="enabled" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="row pause-row">
+          <button class="btn ghost" data-pause="15">Pause 15 min</button>
+          <button class="btn ghost" data-pause="60">Pause 1 hour</button>
+          <button class="btn ghost" data-pause="0">Resume now</button>
+          <span class="pause-state" id="pauseState"></span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Where it runs</h2>
+        <div class="sites">
+          <label><input type="checkbox" data-site="youtube_shorts" /> YouTube Shorts</label>
+          <label><input type="checkbox" data-site="youtube_home" /> YouTube homepage feed</label>
+          <label><input type="checkbox" data-site="instagram_reels" /> Instagram Reels</label>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="row between">
+          <h2>Topics</h2>
+          <button class="btn" id="addTopic">+ Add topic</button>
+        </div>
+        <p class="hint">
+          A video is shown if any keyword/phrase appears in its title, channel, description, or hashtags.
+          Single words match whole words; multi-word phrases match as substrings. Case-insensitive.
+        </p>
+        <div id="topics" class="topics"></div>
+      </section>
+
+      <footer class="ftr">
+        <span id="stats" class="hint"></span>
+        <span class="hint">Settings save automatically.</span>
+      </footer>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>
