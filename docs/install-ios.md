@@ -9,8 +9,10 @@ Verified working path as of 2026-05-16: **"Install from File" via Orion iOS Exte
 Run from repo root:
 
 ```sh
-zip -r smartscroller-v0.1.1.zip manifest.json background/ content/ options/ popup/ -x "*.DS_Store"
+zip -r smartscroller-v0.1.1.zip manifest.json background/ content/ options/ popup/ -x "*.DS_Store" "*/.DS_Store"
 ```
+
+The two `-x` patterns together cover `.DS_Store` at the archive root *and* inside the bundled subdirectories — a single `*.DS_Store` only strips it at the root on some `zip` versions.
 
 Bump the filename version number when shipping a new build.
 
@@ -69,9 +71,15 @@ Verify the install in ~30 seconds:
 
 ### "Install from File" rejects the zip
 
-- Confirm the zip was built from the repo root (so `manifest.json` is at the top level of the archive, not inside a subdirectory).
-- Try repackaging: `cd smartscroller/ && zip -r ../smartscroller-v0.1.1.zip manifest.json background/ content/ options/ popup/ -x "*.DS_Store"`
-- If Orion still rejects it, see the CWS-unlisted backup recipe below.
+- Confirm the zip was built from the repo root (so `manifest.json` is at the top level of the archive, not inside a subdirectory). Open it in Finder / Archive Utility and verify `manifest.json` is the first entry — if you see `smartscroller/manifest.json` instead, repackage from inside the repo root.
+- Repackage from the repo root (any folder name; do **not** hardcode `smartscroller/`):
+  ```sh
+  cd "$(git rev-parse --show-toplevel)"
+  zip -r smartscroller-v0.1.1.zip manifest.json background/ content/ options/ popup/ -x "*.DS_Store" "*/.DS_Store"
+  ```
+- Validate the bundle itself before blaming Orion: load it as an unpacked extension in Chrome / Edge / Brave (`chrome://extensions` → Developer mode → Load unpacked → select the repo folder). If Chrome accepts it, the zip is fine and the issue is Orion-side; if Chrome rejects it, `manifest.json` is the culprit.
+- Still rejected? Try a `.crx`-packed build (Chromium → Pack extension → produces a `.crx` Orion can sometimes accept) before falling back to the paid options.
+- Only if all of the above fail, see the CWS-unlisted backup recipe below.
 
 ### Blur doesn't appear on YouTube Shorts
 
