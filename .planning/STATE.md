@@ -1,3 +1,17 @@
+---
+gsd_state_version: 1.0
+milestone: v0.1
+milestone_name: milestone
+status: Not started
+last_updated: "2026-05-15T21:13:06.121Z"
+progress:
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
+---
+
 # State: SmartScroller
 
 **Last updated:** 2026-05-16
@@ -80,6 +94,7 @@ None. Roadmap is complete and Phase 1 is ready to plan.
 ### Where we are
 
 Project initialization is complete:
+
 - PROJECT.md, REQUIREMENTS.md, and research (STACK / FEATURES / ARCHITECTURE / PITFALLS / SUMMARY) all exist
 - Codebase is mapped under `.planning/codebase/`
 - v1.0 milestone scope is set: "SmartScroller works on my iPhone, with semantic understanding."
