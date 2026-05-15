@@ -27,7 +27,7 @@
   3. The same extension build (or its desktop equivalent) still loads in desktop Orion or Chrome/Brave so the author retains a dev sandbox
   4. After backgrounding the Orion app, killing it, restarting the phone, or completing an iOS Safari refresh, the extension is still enabled and still blurring without manual toggling
   5. A single documented decision exists for which distribution path the project uses: **"Install from File" via Orion iOS Extensions menu, fed a self-built zip of the unpacked extension** (verified on-device 2026-05-16). Both originally-proposed paths — Chrome Web Store unlisted ($5 one-time) and Xcode-wrapped Safari Web Extension ($99/yr) — are explicitly ruled out as primary; they remain documented as backup recipes only. See `.planning/phases/01-install-path-validation-on-iphone-orion/01-CONTEXT.md` (D-01, D-02) for the locked decision.
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
 - [x] 01-01-PLAN.md — Write docs/install-ios.md, update README Install in Orion section, add *.zip to .gitignore
 
