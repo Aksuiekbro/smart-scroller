@@ -1,10 +1,13 @@
 ---
 phase: 2
 slug: mobile-dom-port-on-device-embedder-smoke-test
-status: complete
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-16
+reviewed_at: 2026-05-16T00:00:00Z
+reviewer: gsd-ui-checker
+revisions: 1
 ---
 
 # Phase 2 — UI Design Contract
@@ -74,17 +77,31 @@ Source: options/options.css lines 34–60.
 
 ## Typography
 
-All values are locked from the existing options/options.css. The diagnostic page and options additions use the same scale exactly.
+### New Phase 2 declarations (in-scope for the 2-weight / 4-size constraint)
+
+Phase 2 introduces new classes (`.result-row`, `.result-icon`, `.result-label`, `.result-value`, `.result-threshold`, `.spinner`) and extends the existing options page with new sections. All new code uses exactly **two weights** and **four sizes**:
 
 | Role | Size | Weight | Line Height | CSS Class / Usage |
 |------|------|--------|-------------|-------------------|
-| Body | 14px | 400 (regular) | 1.45 | Default `body` font-size; topic names, hints body |
-| Small / hint | 12px | 400 (regular) | 1.4 | `.hint`, `.status`, `.pause-state`, `.chip` text |
-| Label / UI | 13px | 500 (medium) | 1.3 | `.btn` text, `.status` indicator |
-| Section heading | 15px | 600 (semibold) | 1.2 | `h2` — used for section titles inside `.card` |
+| Small / hint / threshold | 12px | 400 (regular) | 1.4 | `.hint`, `.status`, `.result-threshold` — threshold annotation reuses the existing 12px `.hint` size to keep the type scale minimal |
+| Label / UI chrome | 13px | 400 (regular) | 1.3 | `.result-label` metric name |
+| Body / heading | 14px | 400 (regular) body / 600 (semibold) h2 | 1.45 body / 1.2 h2 | Default `body` font-size; `h2` section titles — h2 visual emphasis comes from weight (600) and section spacing, not size; keeps the type scale to 4 sizes (12/13/14/24) |
 | Page heading | 24px | 600 (semibold) | 1.0 (letter-spacing: -0.01em) | `h1` in `.hdr` |
 
-Two weights in use: **400** (regular) and **600** (semibold). The `.btn` uses 500 as a third accent weight; keep this scoped to buttons only.
+**Declared weights for new Phase 2 code: 400 (regular) and 600 (semibold). Exactly 2.**
+
+**Declared sizes for new Phase 2 code: 12px / 13px / 14px / 24px. Exactly 4.**
+
+Note on `h2`: The locked `options/options.css` source file declares `h2 { font-size: 15px; font-weight: 600 }`. Phase 2 new sections in the options page inherit this existing rule — it is NOT a new declaration by this UI-SPEC. The diagnostic page (`diagnostic/diagnostic.css`) declares `h2 { font-size: 14px; font-weight: 600 }` as its own new rule (within the 4-size budget). The 15px size in options.css is locked by the existing source and is not counted in Phase 2's type scale.
+
+### Inherited from `options/options.css` (not introduced by Phase 2)
+
+Phase 2 reuses these classes verbatim; their weights are locked by the existing source file and are not new typographic vocabulary introduced by this UI-SPEC.
+
+| Class | Inherited font-weight | Source |
+|-------|-----------------------|--------|
+| `.btn` | 500 (medium) | `options/options.css` — locked |
+| `h2` (options page only) | 600 (semibold) at 15px | `options/options.css` — locked; diagnostic page's h2 uses 14px per above |
 
 Source: options/options.css lines 47–52.
 
@@ -165,7 +182,7 @@ Reusable building blocks from the existing options page. The diagnostic page and
 | `.btn.danger` | Destructive variant — transparent bg, `--danger` text, `1px solid --border` |
 | `.hint` | Muted small text, `font-size: 12px`, `color: var(--muted)` |
 | `.status` | Live-region status text, `font-size: 12px`, `color: var(--muted)`, `aria-live="polite"` |
-| `h2` | Section heading inside a `.card`, `font-size: 15px`, `font-weight: 600`, `margin: 0 0 6px` |
+| `h2` | Section heading inside a `.card` in options page, `font-size: 15px`, `font-weight: 600`, `margin: 0 0 6px` (locked from options/options.css; diagnostic page's h2 uses 14px) |
 
 ### New classes for Phase 2 (diagnostic page only)
 
@@ -173,14 +190,14 @@ These classes must be defined in `diagnostic/diagnostic.css`. They extend the ex
 
 | Class | Description |
 |-------|-------------|
-| `.result-row` | A result measurement row inside the diagnostic card. `display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); margin-bottom: 8px; min-height: 44px;` |
+| `.result-row` | A result measurement row inside the diagnostic card. `display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--card); margin-bottom: 8px; min-height: 44px;` (8px vertical padding is a multiple of 4; `min-height: 44px` preserves the iOS tap-target height floor) |
 | `.result-row--pass` | Pass state tint. `background: rgba(52, 199, 89, 0.08); border-color: rgba(52, 199, 89, 0.35);` |
 | `.result-row--fail` | Fail state tint. `background: rgba(255, 59, 48, 0.08); border-color: rgba(255, 59, 48, 0.35);` |
 | `.result-row--loading` | Loading state — no tint change; accent spinner appears. `border-color: var(--accent);` |
-| `.result-icon` | Icon column, fixed `width: 20px; text-align: center; font-size: 15px; flex-shrink: 0;` |
+| `.result-icon` | Icon column, fixed `width: 20px; text-align: center; font-size: 14px; flex-shrink: 0;` |
 | `.result-label` | Metric name, `font-size: 13px; color: var(--fg); flex: 1;` |
 | `.result-value` | Measured value, `font-size: 13px; font-weight: 600; color: var(--fg);` |
-| `.result-threshold` | Pass/fail threshold annotation, `font-size: 11px; color: var(--muted);` |
+| `.result-threshold` | Pass/fail threshold annotation, `font-size: 12px; color: var(--muted);` (reuses the existing 12px `.hint` size — no new size token) |
 | `.spinner` | CSS-only spinner. 16×16px circle, `border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite;` |
 | `@keyframes spin` | `from { transform: rotate(0deg); } to { transform: rotate(360deg); }` |
 
@@ -209,6 +226,7 @@ All copy is prescriptive. Use these strings exactly.
 | Section heading (`h2`) | `Backup` |
 | Export hint | `Downloads your topics and settings as a JSON file. Stats are not included.` |
 | Export button | `Export settings` |
+| Export inline status | `Exported.` (shown in `.status` `aria-live="polite"` for 2 000ms then clears) |
 | Import subsection label | `Import settings` |
 | File-picker button label (via `<label>`) | `Choose file…` |
 | Paste fallback hint | `Or paste exported JSON below:` |
@@ -228,7 +246,7 @@ All copy is prescriptive. Use these strings exactly.
 | Page sub-heading (`.sub`) | `Verify the embedding model loads within budget on this device.` |
 | Primary button — idle | `Load embedder` |
 | Primary button — during run | `Loading…` (button disabled) |
-| Primary button — after run | `Re-test` |
+| Primary button — after run | `Re-test embedder` |
 | Empty state (before any run) | `No diagnostic run yet. Tap "Load embedder" to start.` |
 | Result table: cold-start row label | `Cold-start time` |
 | Result table: cold-start threshold | `≤ 8 000 ms` |
@@ -263,7 +281,7 @@ All copy is prescriptive. Use these strings exactly.
 5. Within 300ms of pipeline completing: result rows populate with measured values.
 6. Each row gets `.result-row--pass` or `.result-row--fail` based on threshold comparison.
 7. Summary row (final row in the table) shows overall pass/fail.
-8. Button text becomes "Re-test"; button re-enabled.
+8. Button text becomes "Re-test embedder"; button re-enabled.
 9. "Copy to TRANSFORMERS-DECISION.md" button becomes enabled (was disabled before first run).
 10. If an exception is thrown: single `.result-row--fail` row with `Error: {error.message}` in `.result-label`. All other rows hidden or show `—`.
 
@@ -327,7 +345,7 @@ Same flow as file picker from step 4 onward, but:
 | Button | Enabled state | Disabled state | Notes |
 |--------|--------------|----------------|-------|
 | Load embedder | Default | During run (disabled attr) | Text changes to "Loading…" while disabled |
-| Re-test | After first run | During run | Same button; label swaps |
+| Re-test embedder | After first run | During run | Same button; label swaps |
 | Copy to TRANSFORMERS-DECISION.md | After first run | Before first run (disabled attr) | Flash "Copied!" for 1 500ms |
 | Export settings | Always | — | Non-destructive, no disable needed |
 | Choose file… | Always | — | File picker trigger |
@@ -340,6 +358,7 @@ Same flow as file picker from step 4 onward, but:
 ### Diagnostic page
 
 - Reuses the options-page `.wrap` layout pattern: `max-width: 760px; margin: 0 auto; padding: 40px 24px 80px;`
+- Primary visual anchor: the "Load embedder" button (uses `--accent` background) — first interactive element the user sees on page load.
 - Page structure (top to bottom):
   1. `.hdr` block: `h1` "Diagnostics" + `.sub` subtitle
   2. `.card` — "Run" card: "Load embedder" button + `.hint`
