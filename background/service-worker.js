@@ -35,6 +35,9 @@ const DEFAULTS = {
   prehideUnknown: false,
   hardHideOffTopic: false,
   blockShortsSurfaces: false,
+  // Auto-steer queues a "Not interested" nudge on off-topic YouTube cards but never
+  // sends it without the user confirming (per-card or via the batch bar). Off by default.
+  autoSteer: false,
   sites: {
     youtube_shorts: true,
     youtube_home: true,

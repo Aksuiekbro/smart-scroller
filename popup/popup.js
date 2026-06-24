@@ -4,10 +4,11 @@ const $ = (s) => document.querySelector(s);
 let trainingQueue = [];
 
 async function load() {
-  const sync = await api.storage.sync.get(['enabled', 'pauseUntil', 'filterMode']);
+  const sync = await api.storage.sync.get(['enabled', 'pauseUntil', 'filterMode', 'autoSteer']);
   const local = await api.storage.local.get(['stats', 'trainingQueue']);
   trainingQueue = Array.isArray(local.trainingQueue) ? local.trainingQueue : [];
   $('#enabled').checked = sync.enabled !== false;
+  $('#autoSteer').checked = sync.autoSteer === true;
   $('#blurred').textContent = local.stats?.blurred ?? 0;
   $('#allowed').textContent = local.stats?.allowed ?? 0;
   $('#tuned').textContent = local.stats?.tuned ?? 0;
@@ -71,6 +72,10 @@ async function saveQueue(nextQueue) {
 
 $('#enabled').addEventListener('change', async (e) => {
   await api.storage.sync.set({ enabled: e.target.checked });
+});
+
+$('#autoSteer').addEventListener('change', async (e) => {
+  await api.storage.sync.set({ autoSteer: e.target.checked });
 });
 
 document.querySelectorAll('button[data-pause]').forEach((b) => {

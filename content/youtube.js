@@ -139,6 +139,74 @@
     button.textContent = text;
   }
 
+  // --- Auto-steer (confirm-first) -------------------------------------------
+  // Off-topic feed cards get marked data-ss-steer="queued". Nothing is sent to
+  // YouTube until the user taps a card's button or the batch bar — that is the
+  // dry-run/confirm-first contract. The batch send spaces clicks out so it never
+  // fires a bot-like burst of menu interactions.
+  let steerBar = null;
+
+  function queuedCards() {
+    return Array.from(document.querySelectorAll('[data-ss-steer="queued"]'));
+  }
+
+  function ensureSteerBar() {
+    if (steerBar && document.body.contains(steerBar)) return steerBar;
+    steerBar = document.createElement('div');
+    steerBar.className = 'ss-steerbar';
+    steerBar.innerHTML = `
+      <span class="ss-steerbar-label"></span>
+      <button class="ss-btn ss-steerbar-send" type="button">Send all</button>
+      <button class="ss-btn ss-btn--ghost ss-steerbar-dismiss" type="button">Hide</button>
+    `;
+    steerBar.addEventListener('click', (e) => e.stopPropagation());
+    steerBar.querySelector('.ss-steerbar-send').addEventListener('click', sendAllQueued);
+    steerBar.querySelector('.ss-steerbar-dismiss').addEventListener('click', () => {
+      steerBar.dataset.dismissed = '1';
+      steerBar.style.display = 'none';
+    });
+    document.body.appendChild(steerBar);
+    return steerBar;
+  }
+
+  function updateSteerBar() {
+    const cards = queuedCards();
+    if (!cards.length) {
+      if (steerBar) {
+        // A fresh batch later is allowed to re-show even after a dismiss.
+        delete steerBar.dataset.dismissed;
+        steerBar.style.display = 'none';
+      }
+      return;
+    }
+    const bar = ensureSteerBar();
+    if (bar.dataset.dismissed) return;
+    bar.style.display = 'flex';
+    bar.querySelector('.ss-steerbar-label').textContent =
+      `${cards.length} off-topic card${cards.length === 1 ? '' : 's'} ready to nudge`;
+    bar.querySelector('.ss-steerbar-send').textContent =
+      `Send “Not interested” ×${cards.length}`;
+  }
+
+  async function sendAllQueued() {
+    const cards = queuedCards();
+    const sendBtn = steerBar?.querySelector('.ss-steerbar-send');
+    if (sendBtn) buttonBusy(sendBtn, 'Sending…');
+    for (const el of cards) {
+      try {
+        await sendYouTubeFeedback(el, ['not interested']);
+        el.dataset.ssSteer = 'sent';
+        el.style.display = 'none';
+      } catch (_) {
+        el.dataset.ssSteer = 'failed';
+      }
+      // Human-like spacing between menu interactions.
+      await sleep(420);
+    }
+    if (sendBtn) sendBtn.disabled = false;
+    updateSteerBar();
+  }
+
   function hideElement(el) {
     if (el.dataset.ssState === 'hidden') return;
     el.classList.add('ss-hidden');
@@ -155,15 +223,25 @@
       el.style.position = 'relative';
     }
 
+    if (opts.steer) el.dataset.ssSteer = 'queued';
+
+    // In steer mode the "Not interested" action is the primary, clearly-labelled CTA —
+    // the user is confirming a real signal to YouTube, so it must not look incidental.
+    const tuneClass = opts.steer ? 'ss-btn ss-tune ss-tune--primary' : 'ss-btn ss-btn--ghost ss-tune';
+    const tuneLabel = opts.steer ? 'Send “Not interested”' : 'Not interested';
+    const eyebrow = opts.steer
+      ? 'Queued · Not interested'
+      : (opts.reason === 'blocked' ? 'Avoid topic' : 'Off-topic');
+
     const overlay = document.createElement('div');
     overlay.className = 'ss-overlay' + (opts.small ? ' ss-overlay--small' : '');
     overlay.innerHTML = `
       <div class="ss-card">
-        <div class="ss-eyebrow">${opts.reason === 'blocked' ? 'Avoid topic' : 'Off-topic'}</div>
+        <div class="ss-eyebrow">${eyebrow}</div>
         <div class="ss-title">${escapeHtml(meta.title || '(untitled)')}</div>
         <div class="ss-author">${escapeHtml(meta.author || '')}</div>
         <div class="ss-actions">
-          ${opts.canTune ? '<button class="ss-btn ss-btn--ghost ss-tune" type="button">Not interested</button>' : ''}
+          ${opts.canTune ? `<button class="${tuneClass}" type="button">${tuneLabel}</button>` : ''}
           ${meta.author ? '<button class="ss-btn ss-btn--ghost ss-avoid" type="button">Avoid channel</button>' : ''}
           <button class="ss-btn ss-reveal" type="button">Show</button>
         </div>
@@ -177,7 +255,9 @@
       buttonBusy(button, 'Tuning...');
       try {
         await sendYouTubeFeedback(el, ['not interested']);
+        el.dataset.ssSteer = 'sent';
         el.style.display = 'none';
+        updateSteerBar();
       } catch (_) {
         button.disabled = false;
         button.textContent = 'Use menu';
@@ -236,14 +316,16 @@
     el.classList.remove('ss-checking');
     if (!result.onTopic) {
       const small = kind === 'feed' && !isShortsPage;
-      if (settings.hardHideOffTopic) {
+      const canTune = kind === 'feed';
+      // Confirm-first auto-steer: queue a "Not interested" nudge the user can confirm.
+      // Keep the card visible (overlay, not hard-hide) so they can see what they're about
+      // to send; hard-hide still wins when auto-steer is off.
+      const steer = settings.autoSteer && canTune;
+      if (settings.hardHideOffTopic && !steer) {
         hideElement(el);
       } else {
-        applyBlur(el, meta, result.hits, {
-          small,
-          reason: result.reason,
-          canTune: kind === 'feed'
-        });
+        applyBlur(el, meta, result.hits, { small, reason: result.reason, canTune, steer });
+        if (steer) updateSteerBar();
       }
     } else {
       if (kind === 'feed' && result.reason === 'matched' && meta.url) {
@@ -298,7 +380,12 @@
       el.classList.remove('ss-hidden');
       el.querySelector(':scope > .ss-overlay')?.remove();
       delete el.dataset.ssState;
+      delete el.dataset.ssSteer;
     });
+    if (steerBar) {
+      delete steerBar.dataset.dismissed;
+      steerBar.style.display = 'none';
+    }
     scheduleScan();
   });
 

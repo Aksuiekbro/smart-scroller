@@ -13,6 +13,7 @@ Built as a standard Manifest V3 WebExtension, so it loads in **Orion**, **Chrome
 - **Avoid topics** — define channels, phrases, or categories that always get hidden first.
 - **Feed steering mode** — Focus mode only shows learning topics; Coach mode only hides avoid topics.
 - **YouTube nudges** — one-click "Not interested" on hidden YouTube recommendations when YouTube exposes the action.
+- **Auto-steer (confirm-first)** — turn it on and every off-topic YouTube feed card is queued as a "Not interested" nudge; a floating bar sends them all in one tap, spaced out so it never looks like a bot. Nothing is sent until you confirm — it still never auto-watches.
 - **Avoid channel** — add a YouTube channel or Instagram author to your local avoid list from the overlay.
 - **Training queue** — saves matched YouTube recommendations locally so you can open the next useful video from the popup.
 - **Learning search** — opens a YouTube search from your configured learning topics when the queue is empty.
@@ -24,7 +25,7 @@ Built as a standard Manifest V3 WebExtension, so it loads in **Orion**, **Chrome
 
 Off-topic items get a frosted-glass overlay with a small card showing the video title and quick actions: **Show**, **Avoid channel/author**, and on YouTube cards, **Not interested** when available. The "Show" choice is per-item, not sticky — next time it loads it'll be blurred again.
 
-SmartScroller deliberately does **not** auto-watch videos to train your account. Fake watch sessions can pollute creator metrics, look bot-like, and teach the recommender the wrong lesson. The harder, safer loop is: hide bad candidates locally, remove Shorts surfaces, add recurring bad signals to your avoid list, optionally send YouTube's own "Not interested" feedback from the cards you choose, and open useful queued videos or learning searches when you actually want to watch.
+SmartScroller deliberately does **not** auto-watch videos to train your account. Fake watch sessions can pollute creator metrics, look bot-like, and teach the recommender the wrong lesson. The harder, safer loop is: hide bad candidates locally, remove Shorts surfaces, add recurring bad signals to your avoid list, optionally send YouTube's own "Not interested" feedback from the cards you choose (one at a time, or batched via **auto-steer** — still only after you confirm), and open useful queued videos or learning searches when you actually want to watch. "Not interested" / "Don't recommend channel" are the only feedback signals research finds actually move YouTube's recommendations, which is why the steering leans on them instead of synthetic watch time.
 
 ## Install in Orion
 
@@ -58,6 +59,7 @@ Click the SmartScroller toolbar icon → **Edit topics** (or open the options pa
 - Avoid topics always win. In **Focus** mode, a video is shown only when it matches a learning topic. In **Coach** mode, neutral videos are allowed through unless they match an avoid topic.
 - Matched YouTube feed cards are saved into the popup's **Training queue**. Use **Open next** when you want to intentionally watch a useful recommendation.
 - Enable **Hard hide off-topic cards** and **Hide YouTube Shorts surfaces** when blur is still too tempting.
+- Enable **Auto-steer** (Feed steering section, or the popup quick toggle) to queue a "Not interested" nudge on every off-topic YouTube card. A bar appears at the bottom of the page showing how many are queued; tap **Send "Not interested" ×N** to fire them all, or use each card's button. Auto-steer keeps off-topic cards visible (overlay) even when hard-hide is on, so you can see what you're about to send.
 
 Default seeded topic is "AI & Programming" — edit or replace it.
 

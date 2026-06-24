@@ -23,6 +23,7 @@
           'prehideUnknown',
           'hardHideOffTopic',
           'blockShortsSurfaces',
+          'autoSteer',
           'sites',
           'pauseUntil'
         ])
@@ -35,6 +36,7 @@
             prehideUnknown: d.prehideUnknown === true,
             hardHideOffTopic: d.hardHideOffTopic === true,
             blockShortsSurfaces: d.blockShortsSurfaces === true,
+            autoSteer: d.autoSteer === true,
             sites: d.sites || { youtube_shorts: true, youtube_home: true, instagram_reels: true },
             pauseUntil: d.pauseUntil || 0
           };
