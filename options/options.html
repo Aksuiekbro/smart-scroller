@@ -36,6 +36,35 @@
       </section>
 
       <section class="card">
+        <h2>Feed steering</h2>
+        <div class="field-grid">
+          <label class="field">
+            <span>Mode</span>
+            <select id="filterMode">
+              <option value="focus">Focus: only show learning topics</option>
+              <option value="coach">Coach: only hide avoid topics</option>
+            </select>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="prehideUnknown" />
+            <span>Blur cards while checking to reduce flashes</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="hardHideOffTopic" />
+            <span>Hard hide off-topic cards</span>
+          </label>
+          <label class="check">
+            <input type="checkbox" id="blockShortsSurfaces" />
+            <span>Hide YouTube Shorts surfaces</span>
+          </label>
+        </div>
+        <p class="hint">
+          SmartScroller never auto-watches videos. It steers the feed with local matching,
+          user-controlled avoid lists, and optional YouTube "Not interested" nudges.
+        </p>
+      </section>
+
+      <section class="card">
         <h2>Where it runs</h2>
         <div class="sites">
           <label><input type="checkbox" data-site="youtube_shorts" /> YouTube Shorts</label>
@@ -46,14 +75,25 @@
 
       <section class="card">
         <div class="row between">
-          <h2>Topics</h2>
+          <h2>Learning topics</h2>
           <button class="btn" id="addTopic">+ Add topic</button>
         </div>
         <p class="hint">
-          A video is shown if any keyword/phrase appears in its title, channel, description, or hashtags.
+          In Focus mode, a video is shown if any learning keyword appears in its title, channel, description, or hashtags.
           Single words match whole words; multi-word phrases match as substrings. Case-insensitive.
         </p>
         <div id="topics" class="topics"></div>
+      </section>
+
+      <section class="card">
+        <div class="row between">
+          <h2>Avoid topics</h2>
+          <button class="btn" id="addBlockedTopic">+ Add avoid topic</button>
+        </div>
+        <p class="hint">
+          Avoid topics always win. Add channels, phrases, or categories that pull you into low-value loops.
+        </p>
+        <div id="blockedTopics" class="topics"></div>
       </section>
 
       <footer class="ftr">

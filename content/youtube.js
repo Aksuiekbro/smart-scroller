@@ -79,13 +79,71 @@
     const hashtags = Array.from(el.querySelectorAll('a[href*="/hashtag/"]'))
       .map((a) => a.textContent.trim())
       .filter(Boolean);
-    return { title, author: channel, description, hashtags };
+    const link = el.querySelector(
+      'a#video-title-link, a#video-title, a[href*="/watch?v="], a[href^="/shorts/"]'
+    );
+    const url = link?.href || '';
+    return { title, author: channel, description, hashtags, url };
   }
 
   function escapeHtml(s) {
     return String(s ?? '').replace(/[&<>"']/g, (c) =>
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])
     );
+  }
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function findMenuButton(el) {
+    const selectors = [
+      'ytd-menu-renderer yt-icon-button button',
+      'ytd-menu-renderer button[aria-label]',
+      'button[aria-label*="Action menu" i]',
+      'button[aria-label*="More actions" i]',
+      '.dropdown-trigger > button'
+    ];
+    for (const sel of selectors) {
+      const button = el.querySelector(sel);
+      if (button) return button;
+    }
+    return null;
+  }
+
+  function findMenuItem(labels) {
+    const lowered = labels.map((label) => label.toLowerCase());
+    const candidates = Array.from(document.querySelectorAll(
+      'ytd-menu-service-item-renderer, tp-yt-paper-item, yt-list-item-view-model, [role="menuitem"]'
+    ));
+    return candidates.find((node) => {
+      const text = (node.textContent || '').trim().toLowerCase();
+      return lowered.some((label) => text.includes(label));
+    });
+  }
+
+  async function sendYouTubeFeedback(el, labels) {
+    const button = findMenuButton(el);
+    if (!button) throw new Error('menu-not-found');
+    button.click();
+    await sleep(180);
+    const item = findMenuItem(labels);
+    if (!item) throw new Error('feedback-action-not-found');
+    item.click();
+    SS.reportStat('tuned');
+    return true;
+  }
+
+  function buttonBusy(button, text) {
+    button.disabled = true;
+    button.textContent = text;
+  }
+
+  function hideElement(el) {
+    if (el.dataset.ssState === 'hidden') return;
+    el.classList.add('ss-hidden');
+    el.dataset.ssState = 'hidden';
+    SS.reportStat('blurred');
   }
 
   function applyBlur(el, meta, hits, opts = {}) {
@@ -101,15 +159,38 @@
     overlay.className = 'ss-overlay' + (opts.small ? ' ss-overlay--small' : '');
     overlay.innerHTML = `
       <div class="ss-card">
-        <div class="ss-eyebrow">Off-topic</div>
+        <div class="ss-eyebrow">${opts.reason === 'blocked' ? 'Avoid topic' : 'Off-topic'}</div>
         <div class="ss-title">${escapeHtml(meta.title || '(untitled)')}</div>
         <div class="ss-author">${escapeHtml(meta.author || '')}</div>
         <div class="ss-actions">
-          <button class="ss-btn ss-reveal" type="button">Show anyway</button>
+          ${opts.canTune ? '<button class="ss-btn ss-btn--ghost ss-tune" type="button">Not interested</button>' : ''}
+          ${meta.author ? '<button class="ss-btn ss-btn--ghost ss-avoid" type="button">Avoid channel</button>' : ''}
+          <button class="ss-btn ss-reveal" type="button">Show</button>
         </div>
       </div>
     `;
     overlay.addEventListener('click', (e) => e.stopPropagation());
+    overlay.querySelector('.ss-tune')?.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const button = e.currentTarget;
+      buttonBusy(button, 'Tuning...');
+      try {
+        await sendYouTubeFeedback(el, ['not interested']);
+        el.style.display = 'none';
+      } catch (_) {
+        button.disabled = false;
+        button.textContent = 'Use menu';
+        button.title = 'Open the card menu and choose Not interested';
+      }
+    });
+    overlay.querySelector('.ss-avoid')?.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const button = e.currentTarget;
+      buttonBusy(button, 'Saved');
+      await SS.addBlockedKeyword(meta.author);
+    });
     overlay.querySelector('.ss-reveal').addEventListener('click', (e) => {
       e.stopPropagation();
       e.preventDefault();
@@ -126,22 +207,54 @@
     // If we have no signal yet, leave it for the next pass — YouTube hydrates lazily.
     if (!meta.title && !meta.author) return;
 
-    const sites = (await SS.loadSettings()).sites || {};
+    const settings = await SS.loadSettings();
+    const sites = settings.sites || {};
     const isShortsPage = location.pathname.startsWith('/shorts/');
-    if (kind === 'short' && sites.youtube_shorts === false) return;
+    const inShortsShelf = kind === 'feed'
+      ? el.closest('ytd-rich-shelf-renderer, ytd-reel-shelf-renderer')
+      : null;
+    if (kind === 'short') {
+      if (sites.youtube_shorts === false) return;
+      if (settings.blockShortsSurfaces) {
+        hideElement(el);
+        return;
+      }
+    }
     if (kind === 'feed') {
       // Items inside the Shorts shelf on the home feed: treat as shorts toggle
-      const inShortsShelf = el.closest('ytd-rich-shelf-renderer, ytd-reel-shelf-renderer');
       if (inShortsShelf && sites.youtube_shorts === false) return;
       if (!inShortsShelf && sites.youtube_home === false) return;
+      if (inShortsShelf && settings.blockShortsSurfaces) {
+        hideElement(el);
+        return;
+      }
     }
 
     el.dataset.ssState = 'checked';
+    if (settings.prehideUnknown) el.classList.add('ss-checking');
     const result = await SS.classify(meta);
+    el.classList.remove('ss-checking');
     if (!result.onTopic) {
       const small = kind === 'feed' && !isShortsPage;
-      applyBlur(el, meta, result.hits, { small });
+      if (settings.hardHideOffTopic) {
+        hideElement(el);
+      } else {
+        applyBlur(el, meta, result.hits, {
+          small,
+          reason: result.reason,
+          canTune: kind === 'feed'
+        });
+      }
     } else {
+      if (kind === 'feed' && result.reason === 'matched' && meta.url) {
+        SS.queueCandidate({
+          source: 'youtube',
+          title: meta.title,
+          author: meta.author,
+          url: meta.url,
+          topic: result.hits?.[0]?.topic || ''
+        });
+      }
       SS.reportStat('allowed');
     }
   }
@@ -181,6 +294,8 @@
   window.addEventListener('ss:settings-changed', () => {
     document.querySelectorAll('[data-ss-state]').forEach((el) => {
       el.classList.remove('ss-blurred');
+      el.classList.remove('ss-checking');
+      el.classList.remove('ss-hidden');
       el.querySelector(':scope > .ss-overlay')?.remove();
       delete el.dataset.ssState;
     });

@@ -15,9 +15,13 @@
         </label>
       </header>
 
+      <div class="mode" id="mode">Focus mode</div>
+
       <div class="stats">
         <div class="stat"><span class="num" id="blurred">0</span><span class="lbl">blurred today</span></div>
         <div class="stat"><span class="num" id="allowed">0</span><span class="lbl">on-topic</span></div>
+        <div class="stat"><span class="num" id="tuned">0</span><span class="lbl">tuned</span></div>
+        <div class="stat"><span class="num" id="avoided">0</span><span class="lbl">avoided</span></div>
       </div>
 
       <div class="pause">
@@ -29,7 +33,20 @@
         </div>
       </div>
 
-      <button class="open-options" id="openOptions">Edit topics →</button>
+      <div class="training">
+        <div class="training-head">
+          <strong>Training queue</strong>
+          <span id="queueCount">0 saved</span>
+        </div>
+        <div class="queue-preview" id="queuePreview">No useful videos saved yet.</div>
+        <div class="queue-actions">
+          <button id="openNext">Open next</button>
+          <button id="openSearch">Learning search</button>
+          <button id="clearQueue">Clear</button>
+        </div>
+      </div>
+
+      <button class="open-options" id="openOptions">Edit feed steering</button>
     </div>
     <script src="popup.js"></script>
   </body>

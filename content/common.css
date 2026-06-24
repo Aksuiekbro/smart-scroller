@@ -4,6 +4,19 @@
   position: relative;
 }
 
+.ss-hidden {
+  display: none !important;
+}
+
+.ss-checking video,
+.ss-checking img,
+.ss-checking ytd-thumbnail,
+.ss-checking yt-image,
+.ss-checking [class*="thumbnail" i],
+.ss-checking [class*="Thumbnail" i] {
+  filter: blur(12px) saturate(0.65) brightness(0.7) !important;
+}
+
 .ss-blurred video,
 .ss-blurred img,
 .ss-blurred ytd-thumbnail,
@@ -46,7 +59,7 @@
   background: rgba(18, 18, 22, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 14px 18px;
-  border-radius: 14px;
+  border-radius: 8px;
   max-width: min(340px, 80%);
   text-align: center;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
@@ -55,7 +68,7 @@
 .ss-eyebrow {
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.6px;
+  letter-spacing: 0;
   text-transform: uppercase;
   opacity: 0.7;
   margin-bottom: 8px;
@@ -84,6 +97,7 @@
   display: flex;
   gap: 8px;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .ss-btn {
@@ -101,6 +115,7 @@
 
 .ss-btn:hover { opacity: 0.85; }
 .ss-btn:active { transform: scale(0.97); }
+.ss-btn:disabled { cursor: default; opacity: 0.65; transform: none; }
 
 .ss-btn--ghost {
   background: rgba(255, 255, 255, 0.08);
@@ -110,7 +125,7 @@
 /* Small-mode for thumbnail-sized blurs (home feed cards) */
 .ss-overlay--small .ss-card {
   padding: 8px 10px;
-  border-radius: 10px;
+  border-radius: 8px;
   max-width: 90%;
 }
 .ss-overlay--small .ss-eyebrow { font-size: 9px; margin-bottom: 4px; }
@@ -118,3 +133,4 @@
 .ss-overlay--small .ss-author { display: none; }
 .ss-overlay--small .ss-actions { margin-top: 6px; }
 .ss-overlay--small .ss-btn { padding: 4px 8px; font-size: 10px; }
+.ss-overlay--small .ss-avoid { display: none; }
