@@ -122,6 +122,49 @@
   color: #f5f5f7;
 }
 
+/* Steer mode: the "Not interested" CTA is amber so it reads as a real signal to YouTube. */
+.ss-tune--primary {
+  background: #f5a623;
+  color: #1a1206;
+  font-weight: 600;
+}
+
+/* Floating batch bar for confirm-first auto-steer. */
+.ss-steerbar {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  z-index: 2147483601;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 24px);
+  padding: 8px 10px 8px 14px;
+  border-radius: 999px;
+  background: rgba(18, 18, 22, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  color: #f5f5f7;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 13px;
+  animation: ss-fade-in 180ms ease-out;
+}
+
+.ss-steerbar-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.9;
+}
+
+.ss-steerbar .ss-steerbar-send {
+  background: #f5a623;
+  color: #1a1206;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* Small-mode for thumbnail-sized blurs (home feed cards) */
 .ss-overlay--small .ss-card {
   padding: 8px 10px;

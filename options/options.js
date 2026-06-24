@@ -12,6 +12,7 @@ const state = {
   prehideUnknown: false,
   hardHideOffTopic: false,
   blockShortsSurfaces: false,
+  autoSteer: false,
   sites: { youtube_shorts: true, youtube_home: true, instagram_reels: true },
   pauseUntil: 0
 };
@@ -31,6 +32,7 @@ async function save() {
     prehideUnknown: state.prehideUnknown,
     hardHideOffTopic: state.hardHideOffTopic,
     blockShortsSurfaces: state.blockShortsSurfaces,
+    autoSteer: state.autoSteer,
     sites: state.sites,
     pauseUntil: state.pauseUntil
   });
@@ -54,6 +56,7 @@ function render() {
   $('#prehideUnknown').checked = state.prehideUnknown;
   $('#hardHideOffTopic').checked = state.hardHideOffTopic;
   $('#blockShortsSurfaces').checked = state.blockShortsSurfaces;
+  $('#autoSteer').checked = state.autoSteer;
   for (const cb of $$('input[data-site]')) {
     cb.checked = state.sites[cb.dataset.site] !== false;
   }
@@ -207,6 +210,7 @@ async function load() {
     'prehideUnknown',
     'hardHideOffTopic',
     'blockShortsSurfaces',
+    'autoSteer',
     'sites',
     'pauseUntil'
   ]);
@@ -217,6 +221,7 @@ async function load() {
   state.prehideUnknown = d.prehideUnknown === true;
   state.hardHideOffTopic = d.hardHideOffTopic === true;
   state.blockShortsSurfaces = d.blockShortsSurfaces === true;
+  state.autoSteer = d.autoSteer === true;
   state.sites = d.sites || state.sites;
   state.pauseUntil = d.pauseUntil || 0;
   render();
@@ -247,6 +252,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('#blockShortsSurfaces').addEventListener('change', (e) => {
     state.blockShortsSurfaces = e.target.checked;
+    scheduleSave();
+  });
+
+  $('#autoSteer').addEventListener('change', (e) => {
+    state.autoSteer = e.target.checked;
     scheduleSave();
   });
 

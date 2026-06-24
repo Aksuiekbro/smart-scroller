@@ -68,6 +68,7 @@ Plan: 1 of 1 — COMPLETE
 - **No build step, except for the embedder bundle.** v0.1's "vanilla JS, IIFE, no node_modules" rule relaxes only for the one Transformers.js bundle (esbuild).
 - **Service worker is message-router only.** Never load the model in the SW; iOS kills it. Caches go to content-script scope or `chrome.storage.local`. The critical blur path never `await`s `runtime.sendMessage`.
 - **Per-render reveals stay non-sticky.** Intentional UX friction; do not persist "Show anyway" across sessions or navigations.
+- **"Auto-watching" is reframed as confirm-first auto-disinterest (2026-06-24, ad-hoc).** Literal background auto-watch / view-botting is rejected (ToS + account-flag risk, pollutes creator metrics, weak positive signal). Instead `autoSteer` queues YouTube's native "Not interested" on off-topic feed cards and only sends after the user confirms (per-card or batch bar). YouTube-feed only. Built outside the roadmap with user authorization — see `.planning/quick/QUICK-01-auto-disinterest.md`.
 - **Install path locked: Install from File via Orion iOS Extensions menu** (D-01, Phase 1). CWS-unlisted and Xcode-wrapped are backup recipes only. Documented in docs/install-ios.md.
 - **Request Desktop Website is a documented user prerequisite** on iPhone for YouTube Shorts (D-10, Phase 1). Phase 2 removes this requirement with mobile-specific selectors.
 

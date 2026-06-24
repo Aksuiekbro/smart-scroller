@@ -324,6 +324,14 @@ test('queueCandidate sends a local training candidate message', () => {
   ]);
 });
 
+test('classifier exposes the autoSteer flag from settings (confirm-first auto-steer)', async () => {
+  const on = loadClassifier({ autoSteer: true });
+  assert.equal((await on.SmartScroller.loadSettings()).autoSteer, true);
+
+  const off = loadClassifier({});
+  assert.equal((await off.SmartScroller.loadSettings()).autoSteer, false);
+});
+
 test('service worker seeds new feed-steering defaults on install', async () => {
   const harness = loadServiceWorker({ sync: {}, local: {} });
 
@@ -334,6 +342,7 @@ test('service worker seeds new feed-steering defaults on install', async () => {
   assert.equal(harness.syncStore.prehideUnknown, false);
   assert.equal(harness.syncStore.hardHideOffTopic, false);
   assert.equal(harness.syncStore.blockShortsSurfaces, false);
+  assert.equal(harness.syncStore.autoSteer, false);
   assert.equal(harness.syncStore.blockedTopics[0].id, 'low-value');
   assert.equal(harness.syncStore.sites.youtube_home, true);
   assert.deepEqual(harness.localStore.trainingQueue, []);
