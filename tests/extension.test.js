@@ -211,7 +211,12 @@ test('classifier supports Focus and Coach modes for neutral videos', async () =>
     hits: [],
     reason: 'no-match'
   });
-  assert.deepEqual(plain(await coach.SmartScroller.classify(meta)), {
+  const coachResult = plain(await coach.SmartScroller.classify(meta));
+  assert.deepEqual({
+    onTopic: coachResult.onTopic,
+    hits: coachResult.hits,
+    reason: coachResult.reason
+  }, {
     onTopic: true,
     hits: [],
     reason: 'neutral'
@@ -263,6 +268,7 @@ test('classifier resets cached settings when sync storage changes', async () => 
     description: '',
     hashtags: []
   })).reason, 'no-topics');
+  const eventsBeforeChange = dispatchedEvents.length;
 
   await api.storage.sync.set({
     topics: [{ name: 'Systems', keywords: ['rust'] }],
@@ -270,7 +276,8 @@ test('classifier resets cached settings when sync storage changes', async () => 
     filterMode: 'focus'
   });
 
-  assert.deepEqual(dispatchedEvents, ['ss:settings-changed']);
+  assert.equal(dispatchedEvents.length, eventsBeforeChange + 1);
+  assert.equal(dispatchedEvents.at(-1), 'ss:settings-changed');
   assert.equal((await SmartScroller.classify({
     title: 'Rust compiler internals',
     author: '',
@@ -346,13 +353,11 @@ test('service worker seeds new feed-steering defaults on install', async () => {
   assert.equal(harness.syncStore.blockedTopics[0].id, 'low-value');
   assert.equal(harness.syncStore.sites.youtube_home, true);
   assert.deepEqual(harness.localStore.trainingQueue, []);
-  assert.deepEqual(Object.keys(harness.localStore.stats).sort(), [
-    'allowed',
-    'avoided',
-    'blurred',
-    'day',
-    'tuned'
-  ]);
+  assert.equal(harness.localStore.stats.blurred, 0);
+  assert.equal(harness.localStore.stats.allowed, 0);
+  assert.equal(harness.localStore.stats.labeled, 0);
+  assert.equal(harness.localStore.stats.tuned, 0);
+  assert.equal(harness.localStore.stats.avoided, 0);
   assert.equal(harness.openOptionsCalls, 1);
 });
 
@@ -368,13 +373,12 @@ test('service worker increments and backfills stats counters', async () => {
   });
 
   assert.equal(response.ok, true);
-  assert.deepEqual(harness.localStore.stats, {
-    day: today(),
-    blurred: 2,
-    allowed: 3,
-    tuned: 1,
-    avoided: 0
-  });
+  assert.equal(harness.localStore.stats.day, today());
+  assert.equal(harness.localStore.stats.blurred, 2);
+  assert.equal(harness.localStore.stats.allowed, 3);
+  assert.equal(harness.localStore.stats.tuned, 1);
+  assert.equal(harness.localStore.stats.avoided, 0);
+  assert.equal(harness.localStore.stats.labeled, 0);
 });
 
 test('service worker sanitizes and deduplicates training queue candidates', async () => {

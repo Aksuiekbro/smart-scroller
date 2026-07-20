@@ -1,8 +1,10 @@
 # SmartScroller
 
-A browser extension that steers YouTube and Instagram away from low-value loops and toward topics you actually want. It can work as a strict focus filter or as a lighter recommendation coach.
+A browser extension that steers YouTube and Instagram toward topics you want while locally filtering low-signal hype, engagement bait, empty narratives, and unsupported claims.
 
 Built as a standard Manifest V3 WebExtension, so it loads in **Orion**, **Chrome**, **Edge**, **Brave**, and **Firefox** (with minor manifest tweaks for Firefox).
+
+See **[docs/privacy.md](docs/privacy.md)** for the local data-handling disclosure.
 
 ## What it does
 
@@ -18,6 +20,8 @@ Built as a standard Manifest V3 WebExtension, so it loads in **Orion**, **Chrome
 - **Training queue** — saves matched YouTube recommendations locally so you can open the next useful video from the popup.
 - **Learning search** — opens a YouTube search from your configured learning topics when the queue is empty.
 - **Dopamine shield controls** — hard-hide off-topic cards and remove YouTube Shorts surfaces.
+- **Signal filter** — labels or blurs low-information patterns with human-readable reasons without trying to identify who created a post.
+- **Local companion analyzer** — paste text into the popup for an on-device signal review.
 - **Per-site toggles** — turn off filtering on any of the three sites individually.
 - **Anti-flash option** — blur cards while they are being classified.
 - **Pause** — 15 min / 1 hour / custom, then auto-resume.
@@ -74,7 +78,7 @@ The matching tier is local and keyword-based with smart normalization:
 5. Check learning topics. If any learning keyword matches → allow.
 6. If nothing matches, Focus mode blurs and Coach mode allows.
 
-This catches the vast majority of cases with no model file, no network calls, and instant latency. It's deliberately permissive: when in doubt, the item shows.
+After topic matching, the optional signal filter scores visible evidence such as sweeping replacement claims, engagement bait, unsupported certainty, repetitive templates, concrete examples, sources, and caveats. Depending on sensitivity it shows, labels, or blurs the item. The review remains local and uses no model file or network call.
 
 ## Test
 
@@ -84,7 +88,7 @@ Run the automated suite with:
 node --test
 ```
 
-The tests use Node's built-in test runner and mocked browser extension APIs, so there is no dependency install step. `npm test` also works if your Node install includes npm. The suite covers manifest wiring, classifier precedence, Focus vs Coach mode, hashtag matching, avoid-list updates, training-queue storage, shield defaults, and service-worker stats.
+The tests use Node's built-in test runner and mocked browser extension APIs, so there is no dependency install step. `npm test` also works if your Node install includes npm. The suite covers manifest wiring, classifier precedence, Focus vs Coach mode, high-signal decisions, local feedback, hashtag matching, avoid-list updates, training-queue storage, shield defaults, and service-worker stats.
 
 ## Upgrade path: semantic classification
 
@@ -112,7 +116,7 @@ smartscroller/
 │   ├── options.html, .css, .js
 ├── popup/                         # toolbar popup
 │   ├── popup.html, .css, .js
-├── tests/extension.test.js         # mocked WebExtension tests
+├── tests/                         # feed-steering and signal-review tests
 └── README.md
 ```
 

@@ -231,7 +231,10 @@
     const tuneLabel = opts.steer ? 'Send “Not interested”' : 'Not interested';
     const eyebrow = opts.steer
       ? 'Queued · Not interested'
-      : (opts.reason === 'blocked' ? 'Avoid topic' : 'Off-topic');
+      : (opts.reason === 'blocked' ? 'Avoid topic' : opts.reason === 'low-signal' ? 'Low signal' : 'Off-topic');
+    const signalReason = opts.reason === 'low-signal'
+      ? opts.decision?.reasons?.[0] || 'This item matched low-information patterns.'
+      : '';
 
     const overlay = document.createElement('div');
     overlay.className = 'ss-overlay' + (opts.small ? ' ss-overlay--small' : '');
@@ -240,6 +243,7 @@
         <div class="ss-eyebrow">${eyebrow}</div>
         <div class="ss-title">${escapeHtml(meta.title || '(untitled)')}</div>
         <div class="ss-author">${escapeHtml(meta.author || '')}</div>
+        ${signalReason ? `<div class="ss-reasons">${escapeHtml(signalReason)}</div>` : ''}
         <div class="ss-actions">
           ${opts.canTune ? `<button class="${tuneClass}" type="button">${tuneLabel}</button>` : ''}
           ${meta.author ? '<button class="ss-btn ss-btn--ghost ss-avoid" type="button">Avoid channel</button>' : ''}
@@ -279,6 +283,34 @@
     });
     el.appendChild(overlay);
     SS.reportStat('blurred');
+  }
+
+  function applySignalLabel(el, result, small) {
+    if (el.dataset.ssState === 'labeled' || el.dataset.ssState === 'revealed') return;
+    el.classList.add('ss-labeled');
+    el.dataset.ssState = 'labeled';
+    if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+    const decision = result.decision || {};
+    const overlay = document.createElement('div');
+    overlay.className = `ss-overlay ss-overlay--label${small ? ' ss-overlay--small' : ''}`;
+    overlay.innerHTML = `
+      <div class="ss-card">
+        <div class="ss-eyebrow">Review</div>
+        <div class="ss-title">${escapeHtml(decision.reasons?.[0] || 'This item may be low signal.')}</div>
+        <div class="ss-reasons">${escapeHtml((decision.labels || []).slice(0, 3).join(' · '))}</div>
+        <div class="ss-actions"><button class="ss-btn ss-reveal" type="button">Dismiss</button></div>
+      </div>
+    `;
+    overlay.addEventListener('click', (event) => event.stopPropagation());
+    overlay.querySelector('.ss-reveal').addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      el.classList.remove('ss-labeled');
+      el.dataset.ssState = 'revealed';
+      overlay.remove();
+    });
+    el.appendChild(overlay);
+    SS.reportStat('decision_label');
   }
 
   async function process(el, kind) {
@@ -324,10 +356,20 @@
       if (settings.hardHideOffTopic && !steer) {
         hideElement(el);
       } else {
-        applyBlur(el, meta, result.hits, { small, reason: result.reason, canTune, steer });
+        applyBlur(el, meta, result.hits, {
+          small,
+          reason: result.reason,
+          decision: result.decision,
+          canTune,
+          steer
+        });
         if (steer) updateSteerBar();
       }
     } else {
+      if (result.reason === 'low-signal-label') {
+        applySignalLabel(el, result, kind === 'feed' && !isShortsPage);
+        return;
+      }
       if (kind === 'feed' && result.reason === 'matched' && meta.url) {
         SS.queueCandidate({
           source: 'youtube',

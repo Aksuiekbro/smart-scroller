@@ -120,7 +120,7 @@
     );
   }
 
-  function applyBlur(card, meta, reason = 'no-match') {
+  function applyBlur(card, meta, result = {}) {
     if (card.dataset.ssState === 'blurred' || card.dataset.ssState === 'revealed') return;
     card.classList.add('ss-blurred');
     card.dataset.ssState = 'blurred';
@@ -131,11 +131,17 @@
 
     const overlay = document.createElement('div');
     overlay.className = 'ss-overlay';
+    const reason = result.reason || 'no-match';
+    const eyebrow = reason === 'blocked' ? 'Avoid topic' : reason === 'low-signal' ? 'Low signal' : 'Off-topic';
+    const signalReason = reason === 'low-signal'
+      ? result.decision?.reasons?.[0] || 'This item matched low-information patterns.'
+      : '';
     overlay.innerHTML = `
       <div class="ss-card">
-        <div class="ss-eyebrow">${reason === 'blocked' ? 'Avoid topic' : 'Off-topic'}</div>
+        <div class="ss-eyebrow">${eyebrow}</div>
         <div class="ss-title">${escapeHtml(meta.title || '(no caption)')}</div>
         <div class="ss-author">${escapeHtml(meta.author ? '@' + meta.author : '')}</div>
+        ${signalReason ? `<div class="ss-reasons">${escapeHtml(signalReason)}</div>` : ''}
         <div class="ss-actions">
           ${meta.author ? '<button class="ss-btn ss-btn--ghost ss-avoid" type="button">Avoid author</button>' : ''}
           <button class="ss-btn ss-reveal" type="button">Show</button>
@@ -161,6 +167,33 @@
     SS.reportStat('blurred');
   }
 
+  function applySignalLabel(card, result) {
+    card.classList.add('ss-labeled');
+    card.dataset.ssState = 'labeled';
+    if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
+    const decision = result.decision || {};
+    const overlay = document.createElement('div');
+    overlay.className = 'ss-overlay ss-overlay--label';
+    overlay.innerHTML = `
+      <div class="ss-card">
+        <div class="ss-eyebrow">Review</div>
+        <div class="ss-title">${escapeHtml(decision.reasons?.[0] || 'This item may be low signal.')}</div>
+        <div class="ss-reasons">${escapeHtml((decision.labels || []).slice(0, 3).join(' · '))}</div>
+        <div class="ss-actions"><button class="ss-btn ss-reveal" type="button">Dismiss</button></div>
+      </div>
+    `;
+    overlay.addEventListener('click', (event) => event.stopPropagation());
+    overlay.querySelector('.ss-reveal').addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      card.classList.remove('ss-labeled');
+      card.dataset.ssState = 'revealed';
+      overlay.remove();
+    });
+    card.appendChild(overlay);
+    SS.reportStat('decision_label');
+  }
+
   function hideCard(card) {
     if (card.dataset.ssState === 'hidden') return;
     card.classList.add('ss-hidden');
@@ -183,8 +216,12 @@
     card.classList.remove('ss-checking');
     if (!result.onTopic) {
       if (settings.hardHideOffTopic) hideCard(card);
-      else applyBlur(card, meta, result.reason);
+      else applyBlur(card, meta, result);
     } else {
+      if (result.reason === 'low-signal-label') {
+        applySignalLabel(card, result);
+        return;
+      }
       SS.reportStat('allowed');
     }
   }

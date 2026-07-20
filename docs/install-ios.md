@@ -9,7 +9,7 @@ Verified working path as of 2026-05-16: **"Install from File" via Orion iOS Exte
 Run from repo root:
 
 ```sh
-zip -r smartscroller-v0.1.1.zip manifest.json background/ content/ options/ popup/ -x "*.DS_Store" "*/.DS_Store"
+zip -r smartscroller-v0.2.0.zip manifest.json background/ content/ options/ popup/ -x "*.DS_Store" "*/.DS_Store"
 ```
 
 The two `-x` patterns together cover `.DS_Store` at the archive root *and* inside the bundled subdirectories — a single `*.DS_Store` only strips it at the root on some `zip` versions.
@@ -40,6 +40,10 @@ In order of preference:
 
 SmartScroller appears in the Extensions list. Enable it if the toggle is off.
 
+Open SmartScroller's options page and enable YouTube Shorts, YouTube homepage, and
+Instagram Reels under **Where it runs**. Orion may show a separate host-access
+prompt for each site; approve it and reload any already-open tab.
+
 ---
 
 ## 4. Enable Request Desktop Website (required)
@@ -60,7 +64,7 @@ Without this step, YouTube on iPhone Orion serves `m.youtube.com`, which uses di
 Verify the install in ~30 seconds:
 
 1. Open `youtube.com/shorts/` in Orion with Request Desktop on.
-2. Scroll to any Short — a frosted-glass overlay should appear if it isn't AI/programming-related.
+2. Scroll to any Short — a frosted-glass overlay should appear when it is off-topic or matches a clear low-signal pattern.
 3. Tap **Show anyway** on a blurred Short — video should reveal without refreshing the page.
 4. Open `instagram.com` → tap a Reel — blur overlay fires without Request Desktop.
 5. Tap the SmartScroller toolbar icon — **Blurred today** counter shows at least 1.

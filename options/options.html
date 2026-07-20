@@ -71,6 +71,28 @@
       </section>
 
       <section class="card">
+        <div class="row between">
+          <div>
+            <h2>Signal filter</h2>
+            <p class="hint">Finds hype, engagement bait, empty narratives, and unsupported claims. It does not guess who created a post.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="qualityEnabled" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="row quality-controls">
+          <label for="qualityMode">Sensitivity</label>
+          <select id="qualityMode">
+            <option value="gentle">Gentle — label only the clearest cases</option>
+            <option value="balanced">Balanced — recommended</option>
+            <option value="strict">Strict — hide more borderline cases</option>
+          </select>
+          <label><input type="checkbox" id="showReasons" /> Show reasons on filtered posts</label>
+        </div>
+      </section>
+
+      <section class="card">
         <h2>Where it runs</h2>
         <div class="sites">
           <label><input type="checkbox" data-site="youtube_shorts" /> YouTube Shorts</label>

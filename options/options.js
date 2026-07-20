@@ -13,6 +13,9 @@ const state = {
   hardHideOffTopic: false,
   blockShortsSurfaces: false,
   autoSteer: false,
+  qualityEnabled: true,
+  qualityMode: 'balanced',
+  showReasons: true,
   sites: { youtube_shorts: true, youtube_home: true, instagram_reels: true },
   pauseUntil: 0
 };
@@ -33,6 +36,9 @@ async function save() {
     hardHideOffTopic: state.hardHideOffTopic,
     blockShortsSurfaces: state.blockShortsSurfaces,
     autoSteer: state.autoSteer,
+    qualityEnabled: state.qualityEnabled,
+    qualityMode: state.qualityMode,
+    showReasons: state.showReasons,
     sites: state.sites,
     pauseUntil: state.pauseUntil
   });
@@ -57,6 +63,9 @@ function render() {
   $('#hardHideOffTopic').checked = state.hardHideOffTopic;
   $('#blockShortsSurfaces').checked = state.blockShortsSurfaces;
   $('#autoSteer').checked = state.autoSteer;
+  $('#qualityEnabled').checked = state.qualityEnabled;
+  $('#qualityMode').value = state.qualityMode;
+  $('#showReasons').checked = state.showReasons;
   for (const cb of $$('input[data-site]')) {
     cb.checked = state.sites[cb.dataset.site] !== false;
   }
@@ -198,7 +207,7 @@ async function renderStats() {
   if (!stats) return;
   $('#stats').textContent =
     `Today: ${stats.blurred || 0} blurred, ${stats.allowed || 0} allowed, ` +
-    `${stats.tuned || 0} tuned, ${stats.avoided || 0} avoided`;
+    `${stats.labeled || 0} labeled, ${stats.tuned || 0} tuned, ${stats.avoided || 0} avoided`;
 }
 
 async function load() {
@@ -211,6 +220,9 @@ async function load() {
     'hardHideOffTopic',
     'blockShortsSurfaces',
     'autoSteer',
+    'qualityEnabled',
+    'qualityMode',
+    'showReasons',
     'sites',
     'pauseUntil'
   ]);
@@ -222,6 +234,11 @@ async function load() {
   state.hardHideOffTopic = d.hardHideOffTopic === true;
   state.blockShortsSurfaces = d.blockShortsSurfaces === true;
   state.autoSteer = d.autoSteer === true;
+  state.qualityEnabled = d.qualityEnabled === true;
+  state.qualityMode = ['gentle', 'balanced', 'strict'].includes(d.qualityMode)
+    ? d.qualityMode
+    : 'balanced';
+  state.showReasons = d.showReasons !== false;
   state.sites = d.sites || state.sites;
   state.pauseUntil = d.pauseUntil || 0;
   render();
@@ -257,6 +274,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $('#autoSteer').addEventListener('change', (e) => {
     state.autoSteer = e.target.checked;
+    scheduleSave();
+  });
+
+  $('#qualityEnabled').addEventListener('change', (e) => {
+    state.qualityEnabled = e.target.checked;
+    scheduleSave();
+  });
+
+  $('#qualityMode').addEventListener('change', (e) => {
+    state.qualityMode = e.target.value;
+    scheduleSave();
+  });
+
+  $('#showReasons').addEventListener('change', (e) => {
+    state.showReasons = e.target.checked;
     scheduleSave();
   });
 

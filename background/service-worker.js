@@ -5,6 +5,7 @@
 const api = globalThis.browser ?? globalThis.chrome;
 
 const DEFAULTS = {
+  schemaVersion: 2,
   enabled: true,
   topics: [
     {
@@ -38,6 +39,9 @@ const DEFAULTS = {
   // Auto-steer queues a "Not interested" nudge on off-topic YouTube cards but never
   // sends it without the user confirming (per-card or via the batch bar). Off by default.
   autoSteer: false,
+  qualityEnabled: true,
+  qualityMode: "balanced",
+  showReasons: true,
   sites: {
     youtube_shorts: true,
     youtube_home: true,
@@ -48,7 +52,13 @@ const DEFAULTS = {
 
 const LOCAL_DEFAULTS = {
   stats: emptyStats(),
-  trainingQueue: []
+  trainingQueue: [],
+  feedback: {
+    version: 1,
+    labelAdjustments: {},
+    allowAuthors: {},
+    blockLabels: {}
+  }
 };
 
 function today() {
@@ -56,14 +66,40 @@ function today() {
 }
 
 function emptyStats() {
-  return { day: today(), blurred: 0, allowed: 0, tuned: 0, avoided: 0 };
+  return {
+    day: today(),
+    blurred: 0,
+    allowed: 0,
+    tuned: 0,
+    avoided: 0,
+    decisions: 0,
+    shown: 0,
+    labeled: 0,
+    reveals: 0,
+    usefulCorrections: 0,
+    slopCorrections: 0,
+    feedback: 0,
+    estimatedAvoided: 0,
+    adapterErrors: 0,
+    adapterDisabled: 0
+  };
 }
 
 api.runtime.onInstalled.addListener(async () => {
   const sync = await api.storage.sync.get(Object.keys(DEFAULTS));
   const toSet = {};
+  const existingUser = sync.schemaVersion === undefined && (
+    sync.enabled !== undefined ||
+    sync.topics !== undefined ||
+    sync.sites !== undefined ||
+    sync.pauseUntil !== undefined
+  );
   for (const [k, v] of Object.entries(DEFAULTS)) {
     if (sync[k] === undefined) toSet[k] = v;
+  }
+  if (existingUser) {
+    toSet.schemaVersion = 2;
+    toSet.qualityEnabled = false;
   }
   if (Object.keys(toSet).length) await api.storage.sync.set(toSet);
 
@@ -94,12 +130,28 @@ async function rollStatsDay() {
 async function incrementStat(kind) {
   const { stats } = await api.storage.local.get('stats');
   const s = stats && stats.day === today()
-    ? { blurred: 0, allowed: 0, tuned: 0, avoided: 0, ...stats }
+    ? { ...emptyStats(), ...stats, day: today() }
     : emptyStats();
   if (kind === 'blurred') s.blurred++;
   else if (kind === 'allowed') s.allowed++;
   else if (kind === 'tuned') s.tuned++;
   else if (kind === 'avoided') s.avoided++;
+  else if (kind === 'decision_show') {
+    s.decisions++;
+    s.shown++;
+  } else if (kind === 'decision_label') {
+    s.decisions++;
+    s.labeled++;
+  } else if (kind === 'decision_blur') {
+    s.decisions++;
+    s.blurred++;
+    s.estimatedAvoided++;
+  } else if (kind === 'reveal') s.reveals++;
+  else if (kind === 'useful_correction') s.usefulCorrections++;
+  else if (kind === 'slop_correction') s.slopCorrections++;
+  else if (kind === 'feedback') s.feedback++;
+  else if (kind === 'adapter_error') s.adapterErrors++;
+  else if (kind === 'adapter_disabled') s.adapterDisabled++;
   await api.storage.local.set({ stats: s });
   return s;
 }
