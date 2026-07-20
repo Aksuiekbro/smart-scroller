@@ -120,7 +120,7 @@
     );
   }
 
-  function applyBlur(card, meta) {
+  function applyBlur(card, meta, reason = 'no-match') {
     if (card.dataset.ssState === 'blurred' || card.dataset.ssState === 'revealed') return;
     card.classList.add('ss-blurred');
     card.dataset.ssState = 'blurred';
@@ -133,15 +133,24 @@
     overlay.className = 'ss-overlay';
     overlay.innerHTML = `
       <div class="ss-card">
-        <div class="ss-eyebrow">Off-topic</div>
+        <div class="ss-eyebrow">${reason === 'blocked' ? 'Avoid topic' : 'Off-topic'}</div>
         <div class="ss-title">${escapeHtml(meta.title || '(no caption)')}</div>
         <div class="ss-author">${escapeHtml(meta.author ? '@' + meta.author : '')}</div>
         <div class="ss-actions">
-          <button class="ss-btn ss-reveal" type="button">Show anyway</button>
+          ${meta.author ? '<button class="ss-btn ss-btn--ghost ss-avoid" type="button">Avoid author</button>' : ''}
+          <button class="ss-btn ss-reveal" type="button">Show</button>
         </div>
       </div>
     `;
     overlay.addEventListener('click', (e) => e.stopPropagation());
+    overlay.querySelector('.ss-avoid')?.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const button = e.currentTarget;
+      button.disabled = true;
+      button.textContent = 'Saved';
+      await SS.addBlockedKeyword(meta.author);
+    });
     overlay.querySelector('.ss-reveal').addEventListener('click', (e) => {
       e.stopPropagation();
       e.preventDefault();
@@ -152,18 +161,29 @@
     SS.reportStat('blurred');
   }
 
+  function hideCard(card) {
+    if (card.dataset.ssState === 'hidden') return;
+    card.classList.add('ss-hidden');
+    card.dataset.ssState = 'hidden';
+    SS.reportStat('blurred');
+  }
+
   async function process(card) {
     if (card.dataset.ssState) return;
     const meta = extractMeta(card);
     if (!meta.title && !meta.author) return; // Wait for hydration
 
-    const sites = (await SS.loadSettings()).sites || {};
+    const settings = await SS.loadSettings();
+    const sites = settings.sites || {};
     if (sites.instagram_reels === false) return;
 
     card.dataset.ssState = 'checked';
+    if (settings.prehideUnknown) card.classList.add('ss-checking');
     const result = await SS.classify(meta);
+    card.classList.remove('ss-checking');
     if (!result.onTopic) {
-      applyBlur(card, meta);
+      if (settings.hardHideOffTopic) hideCard(card);
+      else applyBlur(card, meta, result.reason);
     } else {
       SS.reportStat('allowed');
     }
@@ -204,6 +224,8 @@
   window.addEventListener('ss:settings-changed', () => {
     document.querySelectorAll('[data-ss-state]').forEach((el) => {
       el.classList.remove('ss-blurred');
+      el.classList.remove('ss-checking');
+      el.classList.remove('ss-hidden');
       el.querySelector(':scope > .ss-overlay')?.remove();
       delete el.dataset.ssState;
     });

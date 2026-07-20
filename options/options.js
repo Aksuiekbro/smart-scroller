@@ -1,4 +1,4 @@
-// Options page logic — auto-saves on every change
+// Options page logic - auto-saves on every change
 
 const api = globalThis.browser ?? globalThis.chrome;
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -7,6 +7,12 @@ const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 const state = {
   enabled: true,
   topics: [],
+  blockedTopics: [],
+  filterMode: 'focus',
+  prehideUnknown: false,
+  hardHideOffTopic: false,
+  blockShortsSurfaces: false,
+  autoSteer: false,
   sites: { youtube_shorts: true, youtube_home: true, instagram_reels: true },
   pauseUntil: 0
 };
@@ -21,6 +27,12 @@ async function save() {
   await api.storage.sync.set({
     enabled: state.enabled,
     topics: state.topics,
+    blockedTopics: state.blockedTopics,
+    filterMode: state.filterMode,
+    prehideUnknown: state.prehideUnknown,
+    hardHideOffTopic: state.hardHideOffTopic,
+    blockShortsSurfaces: state.blockShortsSurfaces,
+    autoSteer: state.autoSteer,
     sites: state.sites,
     pauseUntil: state.pauseUntil
   });
@@ -34,17 +46,31 @@ function flashStatus(msg) {
   statusTimer = setTimeout(() => ($('#status').textContent = ''), 1500);
 }
 
-function uid() {
-  return 't_' + Math.random().toString(36).slice(2, 9);
+function uid(prefix = 't') {
+  return `${prefix}_` + Math.random().toString(36).slice(2, 9);
 }
 
 function render() {
   $('#enabled').checked = state.enabled;
+  $('#filterMode').value = state.filterMode;
+  $('#prehideUnknown').checked = state.prehideUnknown;
+  $('#hardHideOffTopic').checked = state.hardHideOffTopic;
+  $('#blockShortsSurfaces').checked = state.blockShortsSurfaces;
+  $('#autoSteer').checked = state.autoSteer;
   for (const cb of $$('input[data-site]')) {
     cb.checked = state.sites[cb.dataset.site] !== false;
   }
   renderPauseState();
-  renderTopics();
+  renderTopicList({
+    root: $('#topics'),
+    listKey: 'topics',
+    emptyText: 'No learning topics yet. Add one to steer the feed toward useful videos.'
+  });
+  renderTopicList({
+    root: $('#blockedTopics'),
+    listKey: 'blockedTopics',
+    emptyText: 'No avoid topics yet. Add channels, phrases, or categories you want scrubbed.'
+  });
   renderStats();
 }
 
@@ -58,22 +84,22 @@ function renderPauseState() {
   }
 }
 
-function renderTopics() {
-  const root = $('#topics');
+function renderTopicList({ root, listKey, emptyText }) {
   root.innerHTML = '';
-  if (state.topics.length === 0) {
+  const list = state[listKey];
+  if (list.length === 0) {
     const empty = document.createElement('p');
     empty.className = 'hint';
-    empty.textContent = 'No topics yet — add one to start filtering.';
+    empty.textContent = emptyText;
     root.appendChild(empty);
     return;
   }
-  for (const topic of state.topics) {
-    root.appendChild(topicCard(topic));
+  for (const topic of list) {
+    root.appendChild(topicCard(topic, listKey));
   }
 }
 
-function topicCard(topic) {
+function topicCard(topic, listKey) {
   const card = document.createElement('div');
   card.className = 'topic';
   card.dataset.id = topic.id;
@@ -85,7 +111,9 @@ function topicCard(topic) {
   name.className = 'topic-name';
   name.type = 'text';
   name.value = topic.name || '';
-  name.placeholder = 'Topic name (e.g. AI, Cooking, Boxing)';
+  name.placeholder = listKey === 'blockedTopics'
+    ? 'Avoid topic name (e.g. Drama, Gambling, Shorts bait)'
+    : 'Learning topic name (e.g. AI, Cooking, Boxing)';
   name.addEventListener('input', () => {
     topic.name = name.value;
     scheduleSave();
@@ -95,8 +123,14 @@ function topicCard(topic) {
   del.className = 'btn danger';
   del.textContent = 'Remove';
   del.addEventListener('click', () => {
-    state.topics = state.topics.filter((t) => t.id !== topic.id);
-    renderTopics();
+    state[listKey] = state[listKey].filter((t) => t.id !== topic.id);
+    renderTopicList({
+      root: listKey === 'blockedTopics' ? $('#blockedTopics') : $('#topics'),
+      listKey,
+      emptyText: listKey === 'blockedTopics'
+        ? 'No avoid topics yet. Add channels, phrases, or categories you want scrubbed.'
+        : 'No learning topics yet. Add one to steer the feed toward useful videos.'
+    });
     scheduleSave();
   });
 
@@ -108,14 +142,14 @@ function topicCard(topic) {
 
   function renderChips() {
     chips.innerHTML = '';
-    for (const kw of topic.keywords) {
+    for (const kw of topic.keywords || []) {
       const chip = document.createElement('span');
-      chip.className = 'chip';
+      chip.className = listKey === 'blockedTopics' ? 'chip chip--avoid' : 'chip';
       const span = document.createElement('span');
       span.textContent = kw;
       const x = document.createElement('button');
       x.type = 'button';
-      x.textContent = '×';
+      x.textContent = 'x';
       x.title = 'Remove keyword';
       x.addEventListener('click', () => {
         topic.keywords = topic.keywords.filter((k) => k !== kw);
@@ -129,21 +163,21 @@ function topicCard(topic) {
     const input = document.createElement('input');
     input.className = 'chip-input';
     input.type = 'text';
-    input.placeholder = 'add keyword, press enter';
+    input.placeholder = listKey === 'blockedTopics' ? 'avoid keyword, press enter' : 'add keyword, press enter';
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ',') {
         e.preventDefault();
         const v = input.value.trim().toLowerCase();
-        if (v && !topic.keywords.includes(v)) {
+        if (v && !(topic.keywords || []).includes(v)) {
+          if (!Array.isArray(topic.keywords)) topic.keywords = [];
           topic.keywords.push(v);
           renderChips();
           scheduleSave();
-          // Refocus the new input
           chips.querySelector('.chip-input')?.focus();
         } else {
           input.value = '';
         }
-      } else if (e.key === 'Backspace' && !input.value && topic.keywords.length) {
+      } else if (e.key === 'Backspace' && !input.value && topic.keywords?.length) {
         topic.keywords.pop();
         renderChips();
         scheduleSave();
@@ -162,24 +196,67 @@ function topicCard(topic) {
 async function renderStats() {
   const { stats } = await api.storage.local.get('stats');
   if (!stats) return;
-  $('#stats').textContent = `Today: ${stats.blurred || 0} blurred, ${stats.allowed || 0} on-topic`;
+  $('#stats').textContent =
+    `Today: ${stats.blurred || 0} blurred, ${stats.allowed || 0} allowed, ` +
+    `${stats.tuned || 0} tuned, ${stats.avoided || 0} avoided`;
 }
 
 async function load() {
-  const d = await api.storage.sync.get(['enabled', 'topics', 'sites', 'pauseUntil']);
+  const d = await api.storage.sync.get([
+    'enabled',
+    'topics',
+    'blockedTopics',
+    'filterMode',
+    'prehideUnknown',
+    'hardHideOffTopic',
+    'blockShortsSurfaces',
+    'autoSteer',
+    'sites',
+    'pauseUntil'
+  ]);
   state.enabled = d.enabled !== false;
   state.topics = Array.isArray(d.topics) ? d.topics : [];
+  state.blockedTopics = Array.isArray(d.blockedTopics) ? d.blockedTopics : [];
+  state.filterMode = d.filterMode === 'coach' ? 'coach' : 'focus';
+  state.prehideUnknown = d.prehideUnknown === true;
+  state.hardHideOffTopic = d.hardHideOffTopic === true;
+  state.blockShortsSurfaces = d.blockShortsSurfaces === true;
+  state.autoSteer = d.autoSteer === true;
   state.sites = d.sites || state.sites;
   state.pauseUntil = d.pauseUntil || 0;
   render();
 }
 
-// Event wiring
 document.addEventListener('DOMContentLoaded', () => {
   load();
 
   $('#enabled').addEventListener('change', (e) => {
     state.enabled = e.target.checked;
+    scheduleSave();
+  });
+
+  $('#filterMode').addEventListener('change', (e) => {
+    state.filterMode = e.target.value === 'coach' ? 'coach' : 'focus';
+    scheduleSave();
+  });
+
+  $('#prehideUnknown').addEventListener('change', (e) => {
+    state.prehideUnknown = e.target.checked;
+    scheduleSave();
+  });
+
+  $('#hardHideOffTopic').addEventListener('change', (e) => {
+    state.hardHideOffTopic = e.target.checked;
+    scheduleSave();
+  });
+
+  $('#blockShortsSurfaces').addEventListener('change', (e) => {
+    state.blockShortsSurfaces = e.target.checked;
+    scheduleSave();
+  });
+
+  $('#autoSteer').addEventListener('change', (e) => {
+    state.autoSteer = e.target.checked;
     scheduleSave();
   });
 
@@ -200,16 +277,30 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   $('#addTopic').addEventListener('click', () => {
-    state.topics.push({ id: uid(), name: '', keywords: [] });
-    renderTopics();
-    // Focus the new topic's name input
-    const cards = $$('.topic');
-    cards[cards.length - 1]?.querySelector('.topic-name')?.focus();
+    state.topics.push({ id: uid('learn'), name: '', keywords: [] });
+    renderTopicList({
+      root: $('#topics'),
+      listKey: 'topics',
+      emptyText: 'No learning topics yet. Add one to steer the feed toward useful videos.'
+    });
+    const topicCards = $$('.topic', $('#topics'));
+    topicCards[topicCards.length - 1]?.querySelector('.topic-name')?.focus();
+    scheduleSave();
+  });
+
+  $('#addBlockedTopic').addEventListener('click', () => {
+    state.blockedTopics.push({ id: uid('avoid'), name: '', keywords: [] });
+    renderTopicList({
+      root: $('#blockedTopics'),
+      listKey: 'blockedTopics',
+      emptyText: 'No avoid topics yet. Add channels, phrases, or categories you want scrubbed.'
+    });
+    const blockedTopicCards = $$('.topic', $('#blockedTopics'));
+    blockedTopicCards[blockedTopicCards.length - 1]?.querySelector('.topic-name')?.focus();
     scheduleSave();
   });
 });
 
-// Update pause countdown every 30s while page is open
 setInterval(renderPauseState, 30_000);
 
 api.storage.onChanged.addListener((changes, area) => {

@@ -21,6 +21,23 @@ const DEFAULTS = {
       ]
     }
   ],
+  blockedTopics: [
+    {
+      id: "low-value",
+      name: "Low-value distractions",
+      keywords: [
+        "drama", "prank", "rage bait", "celebrity gossip", "reaction",
+        "casino", "gambling", "crypto pump", "alpha male", "red pill"
+      ]
+    }
+  ],
+  filterMode: "focus",
+  prehideUnknown: false,
+  hardHideOffTopic: false,
+  blockShortsSurfaces: false,
+  // Auto-steer queues a "Not interested" nudge on off-topic YouTube cards but never
+  // sends it without the user confirming (per-card or via the batch bar). Off by default.
+  autoSteer: false,
   sites: {
     youtube_shorts: true,
     youtube_home: true,
@@ -30,11 +47,16 @@ const DEFAULTS = {
 };
 
 const LOCAL_DEFAULTS = {
-  stats: { day: today(), blurred: 0, allowed: 0 }
+  stats: emptyStats(),
+  trainingQueue: []
 };
 
 function today() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function emptyStats() {
+  return { day: today(), blurred: 0, allowed: 0, tuned: 0, avoided: 0 };
 }
 
 api.runtime.onInstalled.addListener(async () => {
@@ -65,20 +87,87 @@ rollStatsDay();
 async function rollStatsDay() {
   const { stats } = await api.storage.local.get('stats');
   if (!stats || stats.day !== today()) {
-    await api.storage.local.set({ stats: { day: today(), blurred: 0, allowed: 0 } });
+    await api.storage.local.set({ stats: emptyStats() });
   }
+}
+
+async function incrementStat(kind) {
+  const { stats } = await api.storage.local.get('stats');
+  const s = stats && stats.day === today()
+    ? { blurred: 0, allowed: 0, tuned: 0, avoided: 0, ...stats }
+    : emptyStats();
+  if (kind === 'blurred') s.blurred++;
+  else if (kind === 'allowed') s.allowed++;
+  else if (kind === 'tuned') s.tuned++;
+  else if (kind === 'avoided') s.avoided++;
+  await api.storage.local.set({ stats: s });
+  return s;
+}
+
+function cleanText(value, max) {
+  return String(value || '').replace(/\s+/g, ' ').trim().slice(0, max);
+}
+
+function normalizeYouTubeUrl(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    const host = url.hostname.replace(/^www\./, '');
+    if (host !== 'youtube.com' && host !== 'youtu.be' && !host.endsWith('.youtube.com')) {
+      return '';
+    }
+    if (url.pathname === '/watch') {
+      const id = url.searchParams.get('v');
+      return id ? `https://www.youtube.com/watch?v=${encodeURIComponent(id)}` : '';
+    }
+    if (url.pathname.startsWith('/shorts/')) {
+      const id = url.pathname.split('/').filter(Boolean)[1];
+      return id ? `https://www.youtube.com/shorts/${encodeURIComponent(id)}` : '';
+    }
+  } catch (_) {
+    return '';
+  }
+  return '';
+}
+
+function normalizeQueueItem(raw) {
+  const url = normalizeYouTubeUrl(raw?.url);
+  const title = cleanText(raw?.title, 160);
+  if (!url || !title) return null;
+  return {
+    source: 'youtube',
+    title,
+    author: cleanText(raw?.author, 80),
+    topic: cleanText(raw?.topic, 80),
+    url,
+    addedAt: Date.now()
+  };
+}
+
+async function queueCandidate(rawItem) {
+  const item = normalizeQueueItem(rawItem);
+  if (!item) return { ok: false, error: 'invalid-item' };
+
+  const { trainingQueue } = await api.storage.local.get('trainingQueue');
+  const queue = Array.isArray(trainingQueue) ? trainingQueue : [];
+  const withoutDuplicate = queue.filter((existing) => existing?.url !== item.url);
+  const added = withoutDuplicate.length === queue.length;
+  const next = [item, ...withoutDuplicate].slice(0, 30);
+  await api.storage.local.set({ trainingQueue: next });
+  return { ok: true, added, count: next.length, item };
 }
 
 // Content scripts post stat increments here so we keep counters out of the hot path
 api.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.type === 'ss:stat') {
     (async () => {
-      const { stats } = await api.storage.local.get('stats');
-      const s = stats && stats.day === today() ? stats : { day: today(), blurred: 0, allowed: 0 };
-      if (msg.kind === 'blurred') s.blurred++;
-      else if (msg.kind === 'allowed') s.allowed++;
-      await api.storage.local.set({ stats: s });
+      const s = await incrementStat(msg.kind);
       sendResponse?.({ ok: true, stats: s });
+    })();
+    return true;
+  }
+  if (msg?.type === 'ss:queue-candidate') {
+    (async () => {
+      sendResponse?.(await queueCandidate(msg.item));
     })();
     return true;
   }

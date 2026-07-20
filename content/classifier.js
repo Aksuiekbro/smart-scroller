@@ -15,11 +15,28 @@
     if (cache) return cache;
     if (!pending) {
       pending = api.storage.sync
-        .get(['enabled', 'topics', 'sites', 'pauseUntil'])
+        .get([
+          'enabled',
+          'topics',
+          'blockedTopics',
+          'filterMode',
+          'prehideUnknown',
+          'hardHideOffTopic',
+          'blockShortsSurfaces',
+          'autoSteer',
+          'sites',
+          'pauseUntil'
+        ])
         .then((d) => {
           cache = {
             enabled: d.enabled !== false,
             topics: Array.isArray(d.topics) ? d.topics : [],
+            blockedTopics: Array.isArray(d.blockedTopics) ? d.blockedTopics : [],
+            filterMode: d.filterMode === 'coach' ? 'coach' : 'focus',
+            prehideUnknown: d.prehideUnknown === true,
+            hardHideOffTopic: d.hardHideOffTopic === true,
+            blockShortsSurfaces: d.blockShortsSurfaces === true,
+            autoSteer: d.autoSteer === true,
             sites: d.sites || { youtube_shorts: true, youtube_home: true, instagram_reels: true },
             pauseUntil: d.pauseUntil || 0
           };
@@ -70,6 +87,19 @@
     return re.test(haystack);
   }
 
+  function matchTopics(topics, haystack) {
+    const hits = [];
+    for (const topic of topics || []) {
+      for (const kw of topic.keywords || []) {
+        if (matchKeyword(haystack, kw)) {
+          hits.push({ topic: topic.name, keyword: kw });
+          break;
+        }
+      }
+    }
+    return hits;
+  }
+
   async function classify(meta) {
     const settings = await loadSettings();
     const now = Date.now();
@@ -80,7 +110,7 @@
     if (settings.pauseUntil && now < settings.pauseUntil) {
       return { onTopic: true, hits: [], reason: 'paused' };
     }
-    if (!settings.topics.length) {
+    if (!settings.topics.length && !settings.blockedTopics.length) {
       return { onTopic: true, hits: [], reason: 'no-topics' };
     }
 
@@ -98,16 +128,21 @@
       return { onTopic: true, hits: [], reason: 'empty' };
     }
 
-    const hits = [];
-    for (const topic of settings.topics) {
-      for (const kw of topic.keywords || []) {
-        if (matchKeyword(haystack, kw)) {
-          hits.push({ topic: topic.name, keyword: kw });
-          break;
-        }
-      }
+    const blockedHits = matchTopics(settings.blockedTopics, haystack);
+    if (blockedHits.length > 0) {
+      return { onTopic: false, hits: blockedHits, reason: 'blocked' };
     }
-    return { onTopic: hits.length > 0, hits, reason: hits.length ? 'matched' : 'no-match' };
+
+    const hits = matchTopics(settings.topics, haystack);
+    if (hits.length > 0) {
+      return { onTopic: true, hits, reason: 'matched' };
+    }
+
+    if (settings.filterMode === 'coach') {
+      return { onTopic: true, hits: [], reason: 'neutral' };
+    }
+
+    return { onTopic: false, hits: [], reason: 'no-match' };
   }
 
   function siteEnabled(key) {
@@ -122,5 +157,42 @@
     }
   }
 
-  globalThis.SmartScroller = { classify, loadSettings, siteEnabled, reportStat };
+  function queueCandidate(item) {
+    try {
+      api.runtime.sendMessage({ type: 'ss:queue-candidate', item });
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  async function addBlockedKeyword(keyword, topicName = 'Muted by SmartScroller') {
+    const kw = normalize(keyword);
+    if (!kw) return false;
+
+    const d = await api.storage.sync.get(['blockedTopics']);
+    const blockedTopics = Array.isArray(d.blockedTopics) ? d.blockedTopics : [];
+    let topic = blockedTopics.find((t) => t.id === 'smart-muted');
+    if (!topic) {
+      topic = { id: 'smart-muted', name: topicName, keywords: [] };
+      blockedTopics.push(topic);
+    }
+    if (!Array.isArray(topic.keywords)) topic.keywords = [];
+    if (!topic.keywords.includes(kw)) {
+      topic.keywords.push(kw);
+      await api.storage.sync.set({ blockedTopics });
+      reportStat('avoided');
+      return true;
+    }
+    return false;
+  }
+
+  globalThis.SmartScroller = {
+    classify,
+    loadSettings,
+    siteEnabled,
+    reportStat,
+    queueCandidate,
+    addBlockedKeyword
+  };
 })();
