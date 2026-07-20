@@ -1,8 +1,10 @@
 # SmartScroller
 
-A browser extension that blurs YouTube Shorts, Instagram Reels, and YouTube homepage videos that aren't in your allowed topics. The feed still works — but only on the stuff you actually want to learn from.
+A browser extension that keeps useful knowledge in your feed and locally blurs low-signal hype, engagement bait, unsupported claims, and off-topic videos. It never tries to determine whether a human or AI wrote a post.
 
 Built as a standard Manifest V3 WebExtension, so it loads in **Orion**, **Chrome**, **Edge**, **Brave**, and **Firefox** (with minor manifest tweaks for Firefox).
+
+See **[docs/privacy.md](docs/privacy.md)** for the data-handling disclosure.
 
 ## What it does
 
@@ -10,9 +12,11 @@ Built as a standard Manifest V3 WebExtension, so it loads in **Orion**, **Chrome
 - **YouTube homepage feed** — blurs off-topic video cards on the home page, search, and Up Next sidebar.
 - **Instagram Reels** — blurs off-topic reels both in `/reels/` and when mixed into the main feed.
 - **Topic editor** — define topics with a list of keywords/phrases each.
+- **Signal filter** — label or blur low-information patterns with human-readable reasons.
+- **Local companion analyzer** — paste a post into the popup for a local review without sending it anywhere.
 - **Per-site toggles** — turn off filtering on any of the three sites individually.
 - **Pause** — 15 min / 1 hour / custom, then auto-resume.
-- **Stats** — see how many videos got blurred today.
+- **Stats** — see decisions, labels, reveals, and corrections locally.
 
 Off-topic items get a frosted-glass overlay with a small card showing the video title and a **"Show anyway"** button. The "Show anyway" choice is per-item, not sticky — next time it loads it'll be blurred again.
 
@@ -24,12 +28,13 @@ See **[docs/install-ios.md](docs/install-ios.md)** for the full checklist: zip-b
 
 > **Prerequisite on iPhone:** enable **Request Desktop Website** for `youtube.com` in Orion (tap "AA" in the address bar). Without it, YouTube Shorts selectors don't match the mobile DOM — only Instagram works. Phase 2 removes this requirement.
 
-### Install in Chrome / Edge / Brave (works today)
+### Install in Chrome / Edge / Brave
 
 1. Open `chrome://extensions`.
 2. Toggle **Developer mode** (top right).
 3. Click **Load unpacked** and select the `smartscroller/` directory.
 4. The options page opens automatically on first install. Edit your topics there.
+5. Enable each site in **Where it runs**. SmartScroller requests host access only when you turn a site on.
 
 ### Install in Firefox
 
@@ -46,7 +51,7 @@ Click the SmartScroller toolbar icon → **Edit topics** (or open the options pa
 - **Hashtags** in video metadata are auto-normalized: `#MachineLearning` matches `machine learning`, `#ai_news` matches `ai news`, etc.
 - A video is shown if **any** keyword in **any** topic matches **any** of: title, channel/author, description, or hashtags.
 
-Default seeded topic is "AI & Programming" — edit or replace it.
+New installs start with no default topic allowlist. Existing installations keep their saved topics.
 
 ## How classification works
 
@@ -58,7 +63,9 @@ The matching tier is local and keyword-based with smart normalization:
 4. For each topic, check if any of its keywords match. Multi-word keywords match as substrings; single words match on word boundaries.
 5. If at least one topic matches → on-topic. Otherwise → blur.
 
-This catches the vast majority of cases with no model file, no network calls, and instant latency. It's deliberately permissive: when in doubt, the item shows.
+The quality tier adds transparent local signals for AI replacement hype, engagement bait, theatrical low-information narratives, reusable listicle templates, and unsupported absolutes. Positive signals such as links, benchmarks, code, concrete examples, and caveats reduce the score. It does not penalize a post merely for discussing AI, and it never sends feed text to a server during automatic filtering. When in doubt, the item shows or receives a non-blocking label.
+
+Existing installations keep their old topic-only behavior until the **Signal filter** is enabled. New installations start in balanced quality mode.
 
 ## Upgrade path: semantic classification
 
@@ -69,6 +76,10 @@ This catches the vast majority of cases with no model file, no network calls, an
 3. In `classifier.js`, after the keyword pass yields no match, post `{ meta, topicEmbeddings }` to the offscreen doc and compute cosine similarity. Treat anything above ~0.55 as on-topic.
 
 The keyword pass should stay as the first tier — it's free, instant, and catches obvious cases without burning compute.
+
+## LinkedIn and fact-checking
+
+LinkedIn currently prohibits third-party extensions that scrape, change its appearance, or automate activity. SmartScroller therefore does not inject into LinkedIn or click its “not interested” controls. Use the popup companion analyzer for user-pasted text while a compliant API or partnership is unavailable. The `FactChecker` seam currently returns `unavailable`; a separately hosted, user-triggered Google Fact Check Tools adapter can be added without entering the automatic feed path.
 
 ## Files
 
@@ -97,6 +108,9 @@ smartscroller/
 
 ## Roadmap
 
+- [x] Local signal scoring with reasons and bounded feedback
+- [x] Popup companion analyzer
+- [ ] User-triggered fact-check provider backend
 - [ ] Semantic similarity via Transformers.js (see upgrade path above)
 - [ ] Per-topic toggles (turn off "Cooking" without deleting it)
 - [ ] Hard-block mode (full interstitial instead of blur)

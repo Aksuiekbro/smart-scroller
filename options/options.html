@@ -36,7 +36,30 @@
       </section>
 
       <section class="card">
+        <div class="row between">
+          <div>
+            <h2>Signal filter</h2>
+            <p class="hint">Finds hype, engagement bait, empty narratives, and unsupported claims. It does not try to guess who used AI.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="qualityEnabled" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="row quality-controls">
+          <label for="qualityMode">Sensitivity</label>
+          <select id="qualityMode">
+            <option value="gentle">Gentle — label only the clearest cases</option>
+            <option value="balanced">Balanced — recommended</option>
+            <option value="strict">Strict — hide more borderline cases</option>
+          </select>
+          <label><input type="checkbox" id="showReasons" /> Show reasons on filtered posts</label>
+        </div>
+      </section>
+
+      <section class="card">
         <h2>Where it runs</h2>
+        <p class="hint">Site access is requested only when you enable a site. Reload an open tab after granting access.</p>
         <div class="sites">
           <label><input type="checkbox" data-site="youtube_shorts" /> YouTube Shorts</label>
           <label><input type="checkbox" data-site="youtube_home" /> YouTube homepage feed</label>
@@ -50,7 +73,7 @@
           <button class="btn" id="addTopic">+ Add topic</button>
         </div>
         <p class="hint">
-          A video is shown if any keyword/phrase appears in its title, channel, description, or hashtags.
+          A video is relevant if any keyword/phrase appears in its title, channel, description, or hashtags.
           Single words match whole words; multi-word phrases match as substrings. Case-insensitive.
         </p>
         <div id="topics" class="topics"></div>

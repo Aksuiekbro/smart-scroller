@@ -6,7 +6,7 @@ async function load() {
   const local = await api.storage.local.get(['stats']);
   $('#enabled').checked = sync.enabled !== false;
   $('#blurred').textContent = local.stats?.blurred ?? 0;
-  $('#allowed').textContent = local.stats?.allowed ?? 0;
+  $('#labeled').textContent = local.stats?.labeled ?? 0;
   renderPause(sync.pauseUntil || 0);
 }
 
@@ -36,6 +36,36 @@ document.querySelectorAll('button[data-pause]').forEach((b) => {
 $('#openOptions').addEventListener('click', () => {
   if (api.runtime.openOptionsPage) api.runtime.openOptionsPage();
   else window.open(api.runtime.getURL('options/options.html'));
+});
+
+$('#analyze').addEventListener('click', async () => {
+  const text = $('#analyzerText').value.trim();
+  const result = $('#analysisResult');
+  if (!text) {
+    result.textContent = 'Paste some text first.';
+    return;
+  }
+  const engine = globalThis.SmartScroller;
+  if (!engine?.review) {
+    result.textContent = 'The local reviewer is unavailable.';
+    return;
+  }
+  result.textContent = 'Reviewing…';
+  try {
+    const decision = await engine.review({
+      id: `companion_${Date.now()}`,
+      platform: 'companion',
+      surface: 'companion',
+      text,
+      links: [],
+      media: []
+    });
+    const score = Math.round(decision.slopScore * 100);
+    const reasons = decision.reasons?.slice(0, 2).join(' ') || 'No strong low-signal pattern found.';
+    result.textContent = `${decision.action.toUpperCase()} · ${score}% signal risk. ${reasons}`;
+  } catch (_) {
+    result.textContent = 'Could not review this text; it was left unchanged.';
+  }
 });
 
 load();

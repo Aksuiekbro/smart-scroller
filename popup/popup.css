@@ -60,6 +60,47 @@ header strong { font-size: 14px; }
   padding: 6px; font-size: 12px; cursor: pointer; font-family: inherit;
 }
 .pause-actions button:hover { background: rgba(127,127,127,0.08); }
+
+.analyzer {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.analyzer label {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+.analyzer textarea {
+  display: block;
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 7px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  margin-bottom: 7px;
+}
+.analyze {
+  width: 100%;
+  background: var(--fg);
+  color: var(--bg);
+  border: 0;
+  border-radius: 7px;
+  padding: 7px;
+  font: inherit;
+  cursor: pointer;
+}
+.analysis-result {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+  margin-top: 8px;
+}
 .pause-actions button.resume { color: var(--accent); }
 
 .open-options {

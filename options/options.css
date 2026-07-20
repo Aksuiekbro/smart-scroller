@@ -98,10 +98,33 @@ h2 { margin: 0 0 6px; font-size: 15px; font-weight: 600; }
 .pause-row { margin-top: 14px; flex-wrap: wrap; }
 .pause-state { color: var(--muted); font-size: 12px; }
 
+.quality-controls {
+  margin-top: 14px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 12px;
+}
+.quality-controls select {
+  flex: 1;
+  min-width: 240px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+}
+.quality-controls label:last-child {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .sites { display: flex; flex-direction: column; gap: 8px; }
 .sites label {
   display: flex; gap: 8px; align-items: center; cursor: pointer;
 }
+.sites label.site-unavailable { color: var(--muted); }
 
 .topics { display: flex; flex-direction: column; gap: 14px; }
 .topic {

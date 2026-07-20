@@ -4,11 +4,60 @@ const api = globalThis.browser ?? globalThis.chrome;
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
+const SITE_ORIGINS = {
+  youtube: ['*://*.youtube.com/*'],
+  instagram: ['*://*.instagram.com/*']
+};
+
+function permissionGroup(site) {
+  return site.startsWith('youtube_') ? 'youtube' : site.startsWith('instagram_') ? 'instagram' : null;
+}
+
+async function hasSitePermission(site) {
+  const group = permissionGroup(site);
+  if (!group || !api.permissions?.contains) return true;
+  try {
+    return await api.permissions.contains({ origins: SITE_ORIGINS[group] });
+  } catch (_) {
+    return false;
+  }
+}
+
+async function requestSitePermission(site) {
+  const group = permissionGroup(site);
+  if (!group || !api.permissions?.request) return true;
+  try {
+    return await api.permissions.request({ origins: SITE_ORIGINS[group] });
+  } catch (_) {
+    return false;
+  }
+}
+
+async function updateSitePermission(site, enabled) {
+  const group = permissionGroup(site);
+  if (!group) return true;
+  if (enabled) {
+    const granted = await requestSitePermission(site);
+    if (granted) api.runtime.sendMessage?.({ type: 'ss:register-scripts' });
+    return granted;
+  }
+  const paired = group === 'youtube' ? ['youtube_shorts', 'youtube_home'] : ['instagram_reels'];
+  const anyStillEnabled = paired.some((key) => key !== site && state.sites[key] !== false);
+  if (!anyStillEnabled && api.permissions?.remove) {
+    try { await api.permissions.remove({ origins: SITE_ORIGINS[group] }); } catch (_) { /* best effort */ }
+  }
+  return true;
+}
+
 const state = {
+  schemaVersion: 2,
   enabled: true,
   topics: [],
   sites: { youtube_shorts: true, youtube_home: true, instagram_reels: true },
-  pauseUntil: 0
+  pauseUntil: 0,
+  qualityEnabled: true,
+  qualityMode: 'balanced',
+  showReasons: true
 };
 
 let saveTimer = null;
@@ -19,10 +68,14 @@ function scheduleSave() {
 
 async function save() {
   await api.storage.sync.set({
+    schemaVersion: 2,
     enabled: state.enabled,
     topics: state.topics,
     sites: state.sites,
-    pauseUntil: state.pauseUntil
+    pauseUntil: state.pauseUntil,
+    qualityEnabled: state.qualityEnabled,
+    qualityMode: state.qualityMode,
+    showReasons: state.showReasons
   });
   flashStatus('Saved');
 }
@@ -40,6 +93,9 @@ function uid() {
 
 function render() {
   $('#enabled').checked = state.enabled;
+  $('#qualityEnabled').checked = state.qualityEnabled;
+  $('#qualityMode').value = state.qualityMode;
+  $('#showReasons').checked = state.showReasons;
   for (const cb of $$('input[data-site]')) {
     cb.checked = state.sites[cb.dataset.site] !== false;
   }
@@ -162,16 +218,38 @@ function topicCard(topic) {
 async function renderStats() {
   const { stats } = await api.storage.local.get('stats');
   if (!stats) return;
-  $('#stats').textContent = `Today: ${stats.blurred || 0} blurred, ${stats.allowed || 0} on-topic`;
+  $('#stats').textContent = `Today: ${stats.blurred || 0} blurred, ${stats.labeled || 0} labeled, ${stats.reveals || 0} revealed, ${stats.usefulCorrections || 0} useful corrections`;
 }
 
 async function load() {
-  const d = await api.storage.sync.get(['enabled', 'topics', 'sites', 'pauseUntil']);
+  const d = await api.storage.sync.get([
+    'schemaVersion',
+    'enabled',
+    'topics',
+    'sites',
+    'pauseUntil',
+    'qualityEnabled',
+    'qualityMode',
+    'showReasons'
+  ]);
+  state.schemaVersion = 2;
   state.enabled = d.enabled !== false;
   state.topics = Array.isArray(d.topics) ? d.topics : [];
   state.sites = d.sites || state.sites;
   state.pauseUntil = d.pauseUntil || 0;
+  state.qualityEnabled = d.qualityEnabled === true;
+  state.qualityMode = ['gentle', 'balanced', 'strict'].includes(d.qualityMode) ? d.qualityMode : 'balanced';
+  state.showReasons = d.showReasons !== false;
   render();
+  for (const cb of $$('input[data-site]')) {
+    const granted = await hasSitePermission(cb.dataset.site);
+    cb.closest('label')?.classList.toggle('site-unavailable', !granted);
+    cb.title = granted ? 'Site access granted' : 'Enable this switch to grant site access';
+    if (!granted) {
+      cb.checked = false;
+      state.sites[cb.dataset.site] = false;
+    }
+  }
 }
 
 // Event wiring
@@ -183,9 +261,34 @@ document.addEventListener('DOMContentLoaded', () => {
     scheduleSave();
   });
 
+  $('#qualityEnabled').addEventListener('change', (e) => {
+    state.qualityEnabled = e.target.checked;
+    scheduleSave();
+  });
+
+  $('#qualityMode').addEventListener('change', (e) => {
+    state.qualityMode = e.target.value;
+    scheduleSave();
+  });
+
+  $('#showReasons').addEventListener('change', (e) => {
+    state.showReasons = e.target.checked;
+    scheduleSave();
+  });
+
   $$('input[data-site]').forEach((cb) => {
-    cb.addEventListener('change', (e) => {
-      state.sites[e.target.dataset.site] = e.target.checked;
+    cb.addEventListener('change', async (e) => {
+      const site = e.target.dataset.site;
+      const requested = e.target.checked;
+      state.sites[site] = requested;
+      const granted = await updateSitePermission(site, requested);
+      if (requested && !granted) {
+        state.sites[site] = false;
+        e.target.checked = false;
+        flashStatus('Site access was not granted');
+      } else {
+        flashStatus(requested ? 'Site access granted' : 'Site paused');
+      }
       scheduleSave();
     });
   });
