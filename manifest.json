@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "SmartScroller",
-  "version": "0.1.1",
-  "description": "Blur YouTube Shorts, Instagram Reels, and YouTube videos that aren't on your chosen topics. Keep the feed, kill the noise.",
+  "version": "0.2.0",
+  "description": "Keep useful knowledge in your feed and blur low-signal hype, engagement bait, and off-topic posts with local, explainable filtering.",
   "permissions": ["storage"],
   "host_permissions": [
     "*://*.youtube.com/*",

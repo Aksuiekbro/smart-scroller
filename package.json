@@ -1,8 +1,8 @@
 {
   "name": "smart-scroller",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
-  "description": "A WebExtension that steers YouTube and Instagram feeds toward useful topics.",
+  "description": "A local WebExtension that combines feed steering with explainable low-signal filtering.",
   "scripts": {
     "test": "node --test"
   }

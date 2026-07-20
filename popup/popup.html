@@ -28,6 +28,7 @@
       <div class="stats">
         <div class="stat"><span class="num" id="blurred">0</span><span class="lbl">blurred today</span></div>
         <div class="stat"><span class="num" id="allowed">0</span><span class="lbl">on-topic</span></div>
+        <div class="stat"><span class="num" id="labeled">0</span><span class="lbl">labeled</span></div>
         <div class="stat"><span class="num" id="tuned">0</span><span class="lbl">tuned</span></div>
         <div class="stat"><span class="num" id="avoided">0</span><span class="lbl">avoided</span></div>
       </div>
@@ -54,8 +55,16 @@
         </div>
       </div>
 
+      <section class="analyzer">
+        <label for="analyzerText">Analyze a post locally</label>
+        <textarea id="analyzerText" rows="4" placeholder="Paste text here for a signal review…"></textarea>
+        <button class="analyze" id="analyze">Review text</button>
+        <div class="analysis-result" id="analysisResult" aria-live="polite"></div>
+      </section>
+
       <button class="open-options" id="openOptions">Edit feed steering</button>
     </div>
+    <script src="../content/classifier.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>
