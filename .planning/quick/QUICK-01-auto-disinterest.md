@@ -3,7 +3,7 @@
 **Created:** 2026-06-24
 **Type:** ad-hoc feature (out-of-roadmap). User explicitly authorized building directly,
 outside the normal `/gsd-quick` flow, with `.planning/` synced by hand (this file).
-**Branch:** codex/feed-steering-shield
+**Branch:** feature/feed-steering-shield
 **Status:** in progress
 
 ## Why
